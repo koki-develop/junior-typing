@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+@theme {
+  --color-canvas: #ffffff;
+  --color-ink: #23201c;
+  --color-muted: #8f887b;
+  --color-faint: #ead8be;
+  --color-faded: #c7b594;
+  --color-accent: #f0523a;
+
+  --font-round:
+    "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro", "Yu Gothic", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+}
