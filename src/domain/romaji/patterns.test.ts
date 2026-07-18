@@ -68,5 +68,24 @@ describe("buildPatterns", () => {
     it("次のモーラの候補が母音始まりの場合は子音重ねを候補にしない", () => {
       expect(buildPatterns("っあ")[0].candidates).toEqual(["ltu", "xtu", "ltsu"]);
     });
+
+    it("次のモーラの複数候補が同じ先頭子音を持つ場合は重複させない", () => {
+      // し の候補は si/shi/ci。si と shi はどちらも先頭が s なので、
+      // s を2回ではなく1回だけ候補に含める（s, c の順）
+      expect(buildPatterns("っし")[0].candidates).toEqual(["s", "c", "ltu", "xtu", "ltsu"]);
+    });
+  });
+
+  describe("「ん」と「っ」が同じ文字列に混在する場合", () => {
+    it("右から左への解決が「っ」を挟んでも連鎖する", () => {
+      // 「んっと」: と → っ（次が と なので t を候補に）→ ん（次の「っ」候補が
+      // t/ltu/xtu/ltsu のいずれも母音・な行・や行始まりではないため単独 n を許容）
+      // という右から左の依存が「っ」を1段挟んでも正しく解決されることを確認する
+      const patterns = buildPatterns("んっと");
+      expect(patterns.map((p) => p.kana)).toEqual(["ん", "っ", "と"]);
+      expect(patterns[2].candidates).toEqual(["to"]);
+      expect(patterns[1].candidates).toEqual(["t", "ltu", "xtu", "ltsu"]);
+      expect(patterns[0].candidates).toEqual(["n", "nn", "xn"]);
+    });
   });
 });

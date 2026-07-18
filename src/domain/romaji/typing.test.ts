@@ -123,6 +123,51 @@ describe("typeKey", () => {
       expect(result.state.typed).toBe("nihon");
       expect(result.state.buffer).toBe("g");
     });
+
+    it("末尾の「ん」で無効キーを送っても壊れず、その後 n は保留のまま受理される", () => {
+      // 末尾の「ん」は nn/xn のみが候補（n 単独は不可）。
+      // まず候補にない z を送って拒否されることを確認したうえで、
+      // n を送ると（nn の前半として）受理はされるが末尾なので即確定はしない。
+      const state = createTypingState("ん");
+      const rejected = typeKey(state, "z");
+      expect(rejected.correct).toBe(false);
+      expect(rejected.state).toBe(state);
+
+      const accepted = typeKey(state, "n");
+      expect(accepted.correct).toBe(true);
+      expect(accepted.state.buffer).toBe("n");
+      expect(isFinished(accepted.state)).toBe(false);
+    });
+
+    it("単独 n 確定保留中に次モーラへの継続もできないキーを送ると、状態を変えずに拒否する", () => {
+      // 「んご」で n まで打った直後は「ん」が n で確定するか nn まで伸びるか未確定。
+      // ここで g にも n の伸長にも一致しない z を送ると、
+      // 「ん」を n で確定→「ご」に z を retry、のいずれも一致せず最終的に拒否される
+      // （typeKey 内の commit-then-retry 分岐が「retry も失敗する」ケースを通る）。
+      const { state } = typeSequence("んご", "n");
+      const result = typeKey(state, "z");
+      expect(result.correct).toBe(false);
+      expect(result.state).toBe(state);
+    });
+
+    it("末尾モーラを越えて retry が呼ばれても advance はクラッシュせず拒否を返す", () => {
+      // このケースは実際のタイピング経路では発生しない：
+      // 最後のモーラのバッファが候補と完全一致した状態で足止めされる、という状況は
+      // 通常なら advance が即座に確定させてしまうため起こらない
+      // （「ご」は候補が go の1つだけで、長い候補が残らないので確定を待たせられない）。
+      // advance が「確定済みモーラの次」を安全に処理できることを守る防御的分岐なので、
+      // TypingState を手動構築してその契約だけを検証する。
+      const patterns = createTypingState("んご").patterns;
+      const stuckAtLastMora: TypingState = {
+        patterns,
+        unitIndex: 1, // 最後のモーラ「ご」を指している
+        buffer: "go", // 唯一の候補と完全一致（本来なら即確定しているはずの状態）
+        typed: "n",
+      };
+      const result = typeKey(stuckAtLastMora, "x");
+      expect(result.correct).toBe(false);
+      expect(result.state).toBe(stuckAtLastMora);
+    });
   });
 
   describe("「っ」の入力", () => {
@@ -188,5 +233,18 @@ describe("romajiDisplay", () => {
     const display = romajiDisplay(state);
     expect(display.typed).toBe("arigatou");
     expect(display.remaining).toBe("");
+  });
+
+  it("バッファがどの候補とも前方一致しない不整合な状態でも、先頭候補にフォールバックして表示する", () => {
+    // typeKey が返す TypingState では buffer は常にいずれかの候補の前方一致になるため、
+    // このケースは通常のタイピングフローでは発生しない。
+    // それでも romajiDisplay は表示専用の射影として「壊れずに何かしら妥当な残りを返す」
+    // 契約を持たせてあるので、その契約自体を手動構築した TypingState で検証する。
+    const patterns = createTypingState("し").patterns; // 候補: si / shi / ci
+    const inconsistent: TypingState = { patterns, unitIndex: 0, buffer: "z", typed: "" };
+    const display = romajiDisplay(inconsistent);
+    // z はどの候補にも前方一致しないため、先頭候補 si にフォールバックし、
+    // 残りは "z" を打ったあとの続きではなく si の buffer 分（1文字）を除いた "i" になる
+    expect(display.remaining).toBe("i");
   });
 });
