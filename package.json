@@ -1,12 +1,14 @@
 {
   "name": "junior-typing",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,6 +26,7 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.3",
     "babel-plugin-react-compiler": "1.0.0",
+    "oxfmt": "0.59.0",
     "oxlint": "1.74.0",
     "typescript": "7.0.2",
     "vite": "8.1.5"
