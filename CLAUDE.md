@@ -25,8 +25,8 @@ Single-page React 19 + Vite + Tailwind v4 typing game for Japanese input. React 
 
 - `src/data/questions.ts` — the question list. Each `Question` has `text` (display) and `kana` (hiragana used by the input engine).
 - `src/lib/romaji.ts` — pure kana→romaji input engine. No React. Fully unit-tested in `romaji.test.ts`.
-- `src/lib/useTypingGame.ts` — glues the engine to React via `useReducer` + a single `window` keydown listener. Returns a **discriminated union** `TypingGameState` (`{done: true}` vs `{done: false, ...}`) so consumers get type-level guarantees about which fields exist.
-- `src/components/*` + `src/App.tsx` — presentation only. `App.tsx` branches on `game.done`.
+- `src/lib/useTypingGame.ts` — glues the engine to React via `useReducer` + a single `window` keydown listener. Returns a **phase-tagged discriminated union** `TypingGameState` with `phase: "idle" | "countdown" | "playing" | "done"` so consumers get type-level guarantees about which fields exist per phase (only `playing` carries `question`/`typed`/`next`/`rest`/`cleared`; `countdown` carries `count: 3 | 2 | 1`). Space in `idle` starts a 3→2→1 countdown before entering `playing`.
+- `src/components/*` + `src/App.tsx` — presentation only. `App.tsx` branches on `game.phase`; `TypingScreen` is a shell (progress + center + keyboard) whose center slot is swapped between `IdleMessage`, `CountdownMessage`, and `QuestionDisplay` — all three share QuestionDisplay's 3-row skeleton so the surrounding layout doesn't jump across phase transitions.
 
 ### Romaji engine model (`src/lib/romaji.ts`)
 
