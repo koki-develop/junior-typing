@@ -17,7 +17,7 @@ export function QuestionDisplay({ kana, text, typed, next, rest, cleared }: Prop
   return (
     <div className="grid place-items-center gap-3 text-center">
       {/* 広い letter-spacing の視覚的なセンタリング用に左に同量のパディングを寄せる */}
-      <p className="pl-[0.28em] text-sm tracking-[0.28em] text-muted">{kana}</p>
+      <p className="pl-[0.28em] text-lg tracking-[0.28em] text-muted">{kana}</p>
       {/* 花丸を絶対配置で重ねるので relative を持たせる。花丸のサイズは em で解決したいので、
           文字サイズが決まっているこの <p> の中に置く必要がある。 */}
       <p
