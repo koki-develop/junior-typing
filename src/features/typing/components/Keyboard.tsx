@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from "react";
+
 type Props = {
   // 次に押すキー（1 文字、大小問わず）。null なら強調なし。
   activeKey: string | null;
@@ -7,28 +9,58 @@ type Props = {
 // 柿色で塗り、それ以外（数字・記号・修飾・矢印）は無地で並べる。
 // esc, fn キーは仕様外なので描かない（ファンクション段自体を持たない）。
 // 純粋な視覚ヒントで、操作可能ではない（aria-hidden）。
+//
+// 内部のキー配置は全て KEYBOARD_WIDTH=800px 前提の px 値で組んである（各キーの幅比率が
+// 崩れると JIS 配列の見た目が壊れるため）。画面幅がそれより狭い場合に備え、実測幅に応じて
+// transform: scale で縮小表示する。ラッパーの高さも scale 分だけ縮めないと、
+// レイアウト上は元の高さのまま下に余白が残ってしまう。
 export function Keyboard({ activeKey }: Props) {
   const active = activeKey?.toLowerCase() ?? null;
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => setScale(Math.min(1, el.clientWidth / KEYBOARD_WIDTH));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
-      className="mx-auto flex flex-col"
-      style={{ gap: `${GAP}px`, width: `${KEYBOARD_WIDTH}px` }}
-      aria-hidden="true"
+      ref={wrapperRef}
+      className="mx-auto w-full overflow-hidden"
+      style={{ maxWidth: `${KEYBOARD_WIDTH}px`, height: `${KEYBOARD_HEIGHT * scale}px` }}
     >
-      <KeyRow keys={ROW_NUMBERS} active={active} />
-      {/* QWERTY 段と ASDF 段は Enter が L 字でまたぐので relative でまとめる。
-          Enter を absolute で右上に重ね、clip-path で下段の左隅（Enter 下部より狭くなる領域）を落とす。 */}
-      <div className="relative flex flex-col" style={{ gap: `${GAP}px` }}>
-        <KeyRow keys={ROW_QWERTY} active={active} />
-        <KeyRow keys={ROW_ASDF} active={active} />
-        <EnterKey />
-      </div>
-      <KeyRow keys={ROW_ZXCV} active={active} />
-      <div className="flex" style={{ gap: `${GAP}px` }}>
-        {ROW_SPACE.map((k, i) => (
-          <KeyCap key={`sp-${i}`} spec={k} active={active} />
-        ))}
-        <ArrowArea />
+      <div
+        className="flex flex-col"
+        style={{
+          gap: `${GAP}px`,
+          width: `${KEYBOARD_WIDTH}px`,
+          height: `${KEYBOARD_HEIGHT}px`,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+        aria-hidden="true"
+      >
+        <KeyRow keys={ROW_NUMBERS} active={active} />
+        {/* QWERTY 段と ASDF 段は Enter が L 字でまたぐので relative でまとめる。
+            Enter を absolute で右上に重ね、clip-path で下段の左隅（Enter 下部より狭くなる領域）を落とす。 */}
+        <div className="relative flex flex-col" style={{ gap: `${GAP}px` }}>
+          <KeyRow keys={ROW_QWERTY} active={active} />
+          <KeyRow keys={ROW_ASDF} active={active} />
+          <EnterKey />
+        </div>
+        <KeyRow keys={ROW_ZXCV} active={active} />
+        <div className="flex" style={{ gap: `${GAP}px` }}>
+          {ROW_SPACE.map((k, i) => (
+            <KeyCap key={`sp-${i}`} spec={k} active={active} />
+          ))}
+          <ArrowArea />
+        </div>
       </div>
     </div>
   );
@@ -55,6 +87,8 @@ const ARROW_W = 48; // 各矢印セル 1 個の幅。上下半分（20px）× 3 
 const ARROW_HALF_H = 20; // 半キー高。上下合計 + row-gap = ROW_H に収まるよう調整。
 const ARROW_AREA_W = ARROW_W * 3 + GAP * 2;
 const KEYBOARD_WIDTH = 800;
+// 可視 5 段（数字 / QWERTY / ASDF / ZXCV / Space）× ROW_H + 段間ギャップ 4 個分。
+const KEYBOARD_HEIGHT = ROW_H * 5 + GAP * 4;
 
 // 数字段。1 と delete だけ「少し横長」で、他の 12 キーは標準幅。合計 2*60 + 12*48 + 13*8 = 800。
 const ROW_NUMBERS: KeySpec[] = [
