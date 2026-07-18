@@ -1,0 +1,11 @@
+pre-commit:
+  commands:
+    gitleaks:
+      glob: "**/*"
+      run: gitleaks git --pre-commit --staged
+    oxfmt:
+      run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    oxlint:
+      run: pnpm exec oxlint --fix --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
