@@ -10,9 +10,11 @@ type Props = {
 // タイピング進捗のローマ字表示。
 // typed: 淡色 / next: 直下に柿色の下線 / rest: 標準色。
 // 文字の太さは 3 状態すべてで揃え、下線と色の差だけで進捗を示す。
+// font-family / サイズ / 太さ / 字間は PhaseLayout のローマ字段（bottom スロットの器）から
+// 継承する。ここで再宣言すると持ち主が二重になるため、このコンポーネントは持たない。
 export function RomajiText({ typed, next, rest }: Props) {
   return (
-    <p className="font-mono text-2xl font-semibold tracking-wider md:text-[28px]">
+    <p>
       <span className="text-faded">{typed}</span>
       {next !== "" && <NextChar char={next} />}
       <span className="text-ink">{rest}</span>

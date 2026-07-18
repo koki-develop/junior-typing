@@ -1,7 +1,4 @@
-export type Question = {
-  text: string;
-  kana: string;
-};
+import type { Question } from "./types.ts";
 
 export const questions: Question[] = [
   { text: "こんにちは", kana: "こんにちは" },
