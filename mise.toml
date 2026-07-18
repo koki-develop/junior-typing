@@ -1,0 +1,8 @@
+[tools]
+bun = "1.3.14"
+node = "24.18.0"
+lefthook = "2.1.10"
+gitleaks = "8.30.1"
+
+[tasks.bootstrap]
+run = ["bun install", "lefthook install"]
