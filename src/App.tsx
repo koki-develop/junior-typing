@@ -18,6 +18,7 @@ function App() {
           typed={game.typed}
           next={game.next}
           rest={game.rest}
+          cleared={game.cleared}
         />
       )}
     </main>
