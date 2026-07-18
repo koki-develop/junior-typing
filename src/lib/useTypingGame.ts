@@ -2,6 +2,7 @@ import { useEffect, useReducer } from "react";
 import type { Question } from "../data/questions.ts";
 import { createTypingState, isFinished, romajiDisplay, typeKey } from "./romaji.ts";
 import type { TypingState } from "./romaji.ts";
+import { playSound } from "./sound.ts";
 
 // ゲームの進行フェーズを discriminated union で表現する。
 // - idle       : 開始待ち。スペースキーでカウントダウンへ。
@@ -35,10 +36,20 @@ const CLEAR_DELAY_MS = 600;
 // idle からの開始トリガー。event.key の値で比較する。
 const START_KEY = " ";
 
+// 直近の打鍵の正誤。reducer は誤入力時に typingState を変えず state を素通りさせるため、
+// 打鍵のたびに新しい参照を作れる専用フィールドを持たせて、effect 側で毎回検知できるようにする。
+type LastKey = { correct: boolean };
+
 type InternalState =
   | { phase: "idle" }
   | { phase: "countdown"; count: CountdownValue }
-  | { phase: "playing"; questionIndex: number; typingState: TypingState; cleared: boolean }
+  | {
+      phase: "playing";
+      questionIndex: number;
+      typingState: TypingState;
+      cleared: boolean;
+      lastKey: LastKey | null;
+    }
   | { phase: "done" };
 
 type Action = { type: "key"; key: string } | { type: "tick" } | { type: "advance" };
@@ -68,6 +79,7 @@ export function useTypingGame(questions: readonly Question[]): TypingGameState {
             questionIndex: 0,
             typingState: createTypingState(questions[0].kana),
             cleared: false,
+            lastKey: null,
           };
         case "playing": {
           if (action.type === "advance") {
@@ -78,7 +90,7 @@ export function useTypingGame(questions: readonly Question[]): TypingGameState {
               return { phase: "done" };
             }
             return {
-              phase: "playing",
+              ...state,
               questionIndex: nextIndex,
               typingState: createTypingState(questions[nextIndex].kana),
               cleared: false,
@@ -88,12 +100,15 @@ export function useTypingGame(questions: readonly Question[]): TypingGameState {
           // クリア演出中は打鍵を握り潰す。
           if (state.cleared) return state;
           const result = typeKey(state.typingState, action.key);
-          if (!result.correct) return state;
+          // 正誤どちらでも新しい参照を作る。誤入力は typingState を変えずに
+          // 素通りさせるだけだと再レンダーが起きず effect 側で検知できないため。
+          const lastKey: LastKey = { correct: result.correct };
+          if (!result.correct) return { ...state, lastKey };
           if (!isFinished(result.state)) {
-            return { ...state, typingState: result.state };
+            return { ...state, typingState: result.state, lastKey };
           }
           // ここで questionIndex を進めず、演出を挟むために cleared だけ立てる。
-          return { ...state, typingState: result.state, cleared: true };
+          return { ...state, typingState: result.state, cleared: true, lastKey };
         }
         case "done":
           return state;
@@ -122,6 +137,7 @@ export function useTypingGame(questions: readonly Question[]): TypingGameState {
   const countdownCount = state.phase === "countdown" ? state.count : null;
   useEffect(() => {
     if (countdownCount === null) return;
+    playSound("bloom");
     const timer = setTimeout(() => dispatch({ type: "tick" }), COUNTDOWN_STEP_MS);
     return () => clearTimeout(timer);
   }, [countdownCount]);
@@ -131,9 +147,26 @@ export function useTypingGame(questions: readonly Question[]): TypingGameState {
   const clearedPending = state.phase === "playing" && state.cleared;
   useEffect(() => {
     if (!clearedPending) return;
+    playSound("success");
     const timer = setTimeout(() => dispatch({ type: "advance" }), CLEAR_DELAY_MS);
     return () => clearTimeout(timer);
   }, [clearedPending]);
+
+  // 新しい問題が表示されるたびに鳴らす。countdown → playing の最初の問題と、
+  // advance による次の問題への切り替わりの両方で questionIndex が変わるため、これで拾える。
+  const questionIndex = state.phase === "playing" ? state.questionIndex : null;
+  useEffect(() => {
+    if (questionIndex === null) return;
+    playSound("ready");
+  }, [questionIndex]);
+
+  // 打鍵の正誤に応じて鳴らす。lastKey は打鍵のたびに（正誤問わず）新しい参照になるため、
+  // 誤入力が連続しても毎回検知できる。
+  const lastKey = state.phase === "playing" ? state.lastKey : null;
+  useEffect(() => {
+    if (lastKey === null) return;
+    playSound(lastKey.correct ? "page" : "error");
+  }, [lastKey]);
 
   const total = questions.length;
   switch (state.phase) {
