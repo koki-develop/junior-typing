@@ -13,6 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "5.2.8",
+    "@fontsource/m-plus-rounded-1c": "5.2.10",
     "@tailwindcss/vite": "4.3.3",
     "react": "19.2.7",
     "react-dom": "19.2.7",

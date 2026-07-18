@@ -8,7 +8,6 @@
   --color-faded: #c7b594;
   --color-accent: #f0523a;
 
-  --font-round:
-    "Hiragino Maru Gothic ProN", "Hiragino Maru Gothic Pro", "Yu Gothic", system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-round: "M PLUS Rounded 1c", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
