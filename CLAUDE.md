@@ -8,12 +8,15 @@ Package manager is **Bun** (pinned in `mise.toml`). Use `bun` / `bunx`, not `npm
 
 - `bun run dev` — start Vite dev server
 - `bun run build` — type-check (`tsc -b`) then build
-- `bun run test` — run Vitest once (`vitest run`)
+- `bun run test` — run Vitest once (`vitest run`; runs the `unit` and `browser` projects together)
+- `bun run test:unit` — node-only project (domain layer / pure logic)
+- `bun run test:browser` — React component tests on Playwright + Chromium
 - `bunx vitest run src/domain/romaji/typing.test.ts` — run a single test file
 - `bunx vitest run -t "拗音"` — run tests matching a name
 - `bun run lint` — oxlint
 - `bun run fmt` / `bun run fmt:check` — oxfmt (formatter)
 - `mise run bootstrap` — first-time setup (`bun install` + `lefthook install`)
+- `bunx playwright install chromium` — one-time browser install for browser mode (needed before the first `bun run test:browser`)
 
 Pre-commit hook (lefthook) runs `gitleaks`, `oxfmt --fix`, and `oxlint --fix` on staged files and re-stages fixes.
 
@@ -74,6 +77,14 @@ Context-dependent moras are resolved in `buildPatterns` (`patterns.ts`) by walki
 ### Styling
 
 Tailwind v4 with tokens defined in `src/app/index.css` via `@theme` (`bg-canvas`, `text-ink`, `font-round`, `font-mono`, etc.). Fonts are self-hosted through `@fontsource/*` — do not add Google Fonts `<link>` tags.
+
+### Testing
+
+`vitest.config.ts` splits tests into two projects under `test.projects`.
+
+- **`unit` project** — `src/**/*.test.ts` on node. Domain-layer pure logic lives here; no React or CSS is loaded, so this project stays fast and is where behavioral regressions get pinned.
+- **`browser` project** — `src/**/*.browser.test.{ts,tsx}` on Playwright + Chromium. React component DOM, a11y, and Tailwind-driven styling are verified in a real browser. `src/test/browser-setup.ts` pulls in `@vitest/browser/matchers` (module augmentation for `toBeInTheDocument`, `toBeVisible`, etc.), `vitest-browser-react`, and `src/app/index.css` so Tailwind tokens (`bg-canvas`, `bg-accent`, …) are applied during tests. The test shape is `import { render } from "vitest-browser-react"` → `const screen = await render(<Component />)` → `await expect.element(screen.getByRole(...)).toBeVisible()`. Note `render` is async — always `await` it.
+- Playwright's Chromium must be installed once with `bunx playwright install chromium`. The same applies on CI and on fresh clones.
 
 ## Repo conventions
 
