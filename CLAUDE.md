@@ -11,6 +11,7 @@ Package manager is **Bun** (pinned in `mise.toml`). Use `bun` / `bunx`, not `npm
 - `bun run test` — run Vitest once (`vitest run`; runs the `unit` and `browser` projects together)
 - `bun run test:unit` — node-only project (domain layer / pure logic)
 - `bun run test:browser` — React component tests on Playwright + Chromium
+- `bun run test:coverage` — run both projects with V8 coverage (writes `coverage/index.html` + lcov)
 - `bunx vitest run src/domain/romaji/typing.test.ts` — run a single test file
 - `bunx vitest run -t "拗音"` — run tests matching a name
 - `bun run lint` — oxlint
@@ -85,6 +86,7 @@ Tailwind v4 with tokens defined in `src/app/index.css` via `@theme` (`bg-canvas`
 - **`unit` project** — `src/**/*.test.ts` on node. Domain-layer pure logic lives here; no React or CSS is loaded, so this project stays fast and is where behavioral regressions get pinned.
 - **`browser` project** — `src/**/*.browser.test.{ts,tsx}` on Playwright + Chromium. React component DOM, a11y, and Tailwind-driven styling are verified in a real browser. `src/test/browser-setup.ts` pulls in `@vitest/browser/matchers` (module augmentation for `toBeInTheDocument`, `toBeVisible`, etc.), `vitest-browser-react`, and `src/app/index.css` so Tailwind tokens (`bg-canvas`, `bg-accent`, …) are applied during tests. The test shape is `import { render } from "vitest-browser-react"` → `const screen = await render(<Component />)` → `await expect.element(screen.getByRole(...)).toBeVisible()`. Note `render` is async — always `await` it.
 - Playwright's Chromium must be installed once with `bunx playwright install chromium`. The same applies on CI and on fresh clones.
+- **Coverage** — `bun run test:coverage` uses `@vitest/coverage-v8` (v8 works on both node and Chromium, so unit + browser results are merged into a single report). Config lives at the root `test.coverage` block in `vitest.config.ts` (coverage is a global option in Vitest 4, not per-project). `include: ["src/**/*.{ts,tsx}"]` deliberately reports files that no test imports as 0%, so gaps are visible; `src/test/**`, `main.tsx`, and `*.test.*` files are excluded. Reports land in `coverage/` (gitignored) — open `coverage/index.html` locally, or feed `coverage/lcov.info` to CI.
 
 ## Repo conventions
 
