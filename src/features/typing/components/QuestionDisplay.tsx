@@ -9,7 +9,7 @@ type Props = {
   typed: string;
   next: string;
   rest: string;
-  // クリア演出中は花丸を重ねる。
+  // クリア演出中は丸を重ねる。
   cleared: boolean;
 };
 
@@ -19,7 +19,7 @@ export function QuestionDisplay({ kana, text, typed, next, rest, cleared }: Prop
     <PhaseLayout
       top={kana}
       main={
-        // 花丸を絶対配置で重ねるので relative を持たせる。花丸のサイズは em で解決したいので、
+        // 丸を絶対配置で重ねるので relative を持たせる。丸のサイズは em で解決したいので、
         // 文字サイズが決まっている PhaseLayout の見出し段の中に置く必要がある。
         <p
           className={
@@ -27,7 +27,7 @@ export function QuestionDisplay({ kana, text, typed, next, rest, cleared }: Prop
           }
         >
           {text}
-          {cleared && <HanamaruStamp />}
+          {cleared && <MaruStamp />}
         </p>
       }
       bottom={<RomajiText typed={typed} next={next} rest={rest} />}
@@ -35,11 +35,11 @@ export function QuestionDisplay({ kana, text, typed, next, rest, cleared }: Prop
   );
 }
 
-// 見出しを囲む赤い花丸を、下を起点にぐるっと 1 周描く。
+// 見出しを囲む赤い丸を、下を起点にぐるっと 1 周描く。
 // - <circle> の path 始点は 3 時方向で固定なので、transform="rotate(90 50 50)" で 6 時方向にずらす。
 //   これで stroke-dashoffset の線描アニメーションが下から時計回りに進む。
 // - サイズは em 基準（親 <p> のフォントサイズが基準）。文字数に依らず常に一定サイズになる。
-function HanamaruStamp() {
+function MaruStamp() {
   return (
     <svg
       viewBox="0 0 100 100"
@@ -57,7 +57,7 @@ function HanamaruStamp() {
         pathLength="100"
         strokeDasharray="100"
         transform="rotate(90 50 50)"
-        className="animate-hanamaru-draw"
+        className="animate-maru-draw"
       />
     </svg>
   );

@@ -11,15 +11,15 @@
   --font-round: "M PLUS Rounded 1c", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* 花丸を「ペンで描いていく」線描アニメーション。pathLength=100 で正規化した stroke-dasharray/offset を動かす。 */
-  --animate-hanamaru-draw: hanamaru-draw 420ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  /* 丸を「ペンで描いていく」線描アニメーション。pathLength=100 で正規化した stroke-dasharray/offset を動かす。 */
+  --animate-maru-draw: maru-draw 420ms cubic-bezier(0.4, 0, 0.2, 1) both;
 
   /* カウントダウンの数字を大きめから縮んで着地させる 1 秒アニメーション。
      各段（3→2→1）で key を切り替えて再発火させる想定。 */
   --animate-countdown-pop: countdown-pop 1000ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
-@keyframes hanamaru-draw {
+@keyframes maru-draw {
   from {
     stroke-dashoffset: 100;
   }
@@ -45,7 +45,7 @@
 
 /* アクセシビリティ：モーション削減時は静止表示。 */
 @media (prefers-reduced-motion: reduce) {
-  .animate-hanamaru-draw,
+  .animate-maru-draw,
   .animate-countdown-pop {
     animation: none;
   }

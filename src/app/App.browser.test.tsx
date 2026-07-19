@@ -59,7 +59,7 @@ test("全問題を最後まで打ち終えると CompletionScreen（終了！）
 
   for (const question of questions) {
     await typeString(firstCandidateRomaji(question.kana));
-    // 花丸演出の CLEAR_DELAY_MS を進めないと次の問題（または done）へ遷移しない。
+    // 丸演出の CLEAR_DELAY_MS を進めないと次の問題（または done）へ遷移しない。
     await advanceTimers(CLEAR_DELAY_MS);
   }
 

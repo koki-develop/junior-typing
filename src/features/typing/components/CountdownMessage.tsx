@@ -19,7 +19,7 @@ export function CountdownMessage({ count }: Props) {
         // 数字を absolute にすると見出し段は通常フローのコンテンツを持たなくなり幅が 0 に潰れる
         // （高さは min-h が下限を保証するが、幅は保証しない）。left-1/2 + -translate-x-1/2 は
         // 自分自身の幅を基準に中央へ寄せる指定なので、親の幅が 0 でも正しく中央に描画できる
-        // （QuestionDisplay の HanamaruStamp と同じテクニック）。
+        // （QuestionDisplay の MaruStamp と同じテクニック）。
         // key={count} で毎段リマウントして animate-countdown-pop を再発火する。
         // tracking-normal で PhaseLayout の見出し用字間（0.04em）の継承を打ち消す。
         <span
