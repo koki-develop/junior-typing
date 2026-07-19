@@ -27,7 +27,7 @@ Single-page React 19 + Vite + Tailwind v4 typing game for Japanese input. React 
 
 ### Layer split
 
-Dependencies flow one way: `domain` ← `services` ← `features` ← `app`. `src/domain/*` has zero React or cuelume imports and is where all the unit-tested logic lives; `services` and `features` adapt it to the outside world.
+Dependencies flow one way: `domain` ← `services` ← `features` ← `pages` ← `app`. `src/domain/*` has zero React or cuelume imports and is where all the unit-tested logic lives; `services` and `features` adapt it to the outside world; `pages` composes features into per-route screens; `app` wires the router.
 
 - `src/domain/romaji/` — kana→romaji input engine.
   - `moraTable.ts` — `MORA_TABLE` (per-mora candidate spellings) and `SOKUON_FALLBACKS`.
@@ -44,7 +44,9 @@ Dependencies flow one way: `domain` ← `services` ← `features` ← `app`. `sr
   - `useKeyboard.ts` — normalizes `keydown` into `{ type: "key", key }` payloads (typed as `KeyboardSend`; no `now`): ignores modifier combos (`meta`/`ctrl`/`alt`), ignores non-single-character keys, `preventDefault`s Space, lowercases the key so Shift/CapsLock still register as intended. `useTypingGame` stamps `now` before forwarding to `transition`.
   - `components/` — presentation only. `TypingScreen` is the shell (progress bar → center → keyboard hint) and also hosts an always-mounted sr-only `aria-live` region announcing the countdown (a live region that only mounts once `countdown` starts would miss the first value, since `aria-live` doesn't announce content already present at mount). Its center slot swaps between `IdleMessage`, `CountdownMessage`, and `QuestionDisplay`. All three share `PhaseLayout`'s 3-row skeleton (furigana / headline / romaji); the headline row's height is a `min-height`, not a fixed height, so a wrapped question grows the row instead of overlapping the romaji row below, while idle/countdown/playing still stay visually aligned. `RomajiText` holds no typography of its own — font/size/weight/letter-spacing are inherited from `PhaseLayout`'s romaji row. `ResultScreen` is the `done`-phase screen: it renders the `GameResult` (キー数・ミス数・時間・スコア) and a「もういちど」button that calls `onRestart`; Space also restarts via `machine.ts`'s `done` phase treating `START_KEY` as `restart` (symmetric with idle start).
 - `src/services/sound.ts` — adapter over cuelume's `play()`. `SOUND_NAMES` is typed `satisfies Record<GameSound, SoundName>`, so adding a `GameSound` without mapping it to a cuelume `SoundName` is a compile error.
-- `src/app/` — composition root: `main.tsx` mounts the app and imports fonts/`index.css`; `App.tsx` destructures `{ view, restart }` from `useTypingGame` and branches on `view.phase` (`"done"` → `ResultScreen` with `view.result` and `restart`, otherwise `TypingScreen`).
+- `src/pages/` — one component per route. Each page owns its own shell (`<main>` wrapper, layout) and composes `features/` inside. Adding a page never changes shared layout unless a common shell actually emerges.
+  - `HomePage.tsx` — the `/` route. Owns the `<main>` grid shell, calls `useTypingGame(questions)`, and branches on `view.phase` (`"done"` → `ResultScreen` with `view.result` and `restart`, otherwise `TypingScreen`).
+- `src/app/` — composition root: `main.tsx` mounts `<RouterProvider router={router} />` and imports fonts/`index.css`; `router.ts` builds the route tree (currently `/` → `HomePage`) and exports both `routeTree` (for tests that need a memory-history router) and the browser-history `router` singleton, and augments `@tanstack/react-router`'s `Register` interface so `<Link to>`/`useParams`/`useNavigate` are type-checked against the actual tree.
 
 ### Game state machine (`src/domain/game/`)
 
@@ -75,7 +77,8 @@ Context-dependent moras are resolved in `buildPatterns` (`patterns.ts`) by walki
 
 - **New kana**: add its candidates to `MORA_TABLE` in `src/domain/romaji/moraTable.ts`.
 - **New question**: add to `src/domain/questions/questions.ts`; `questions.test.ts` catches unsupported kana at test time.
-- **New phase**: extend `GameState`/`GameEvent` and the `transition` switch in `src/domain/game/machine.ts`, extend `GameView` in `view.ts`, then handle the new phase in `App.tsx` (if it swaps the whole screen like `done`) or in `TypingScreen`'s `PlayfieldCenter` (if it sits inside the play shell).
+- **New phase**: extend `GameState`/`GameEvent` and the `transition` switch in `src/domain/game/machine.ts`, extend `GameView` in `view.ts`, then handle the new phase in `src/pages/HomePage.tsx` (if it swaps the whole screen like `done`) or in `TypingScreen`'s `PlayfieldCenter` (if it sits inside the play shell).
+- **New page/route**: add `src/pages/XxxPage.tsx`, then in `src/app/router.ts` create the route with `createRoute({ getParentRoute: () => rootRoute, path: "/xxx", component: XxxPage })` and append it to `rootRoute.addChildren([...])`. Because the exported `router` is registered via `declare module "@tanstack/react-router" { interface Register { router: typeof router } }`, `<Link to="/xxx">` is compile-checked and a typo like `to="/xxxx"` fails `bun run build`.
 - **New sound effect**: add it to `GameSound` in `src/domain/game/effects.ts` and map it in `SOUND_NAMES` in `src/services/sound.ts`.
 - **Change the score formula**: edit the constants and body of `computeResult` in `src/domain/game/score.ts`; `score.test.ts` pins the expected score as literal numbers (never as expressions over the same constants), so updating a constant deliberately breaks the assertions until you re-derive them by hand.
 

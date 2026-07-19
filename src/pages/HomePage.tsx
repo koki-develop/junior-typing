@@ -3,7 +3,7 @@ import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
 
-function App() {
+export function HomePage() {
   const { view, restart } = useTypingGame(questions);
 
   return (
@@ -19,5 +19,3 @@ function App() {
     </main>
   );
 }
-
-export default App;
