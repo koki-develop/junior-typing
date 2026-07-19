@@ -200,7 +200,7 @@ function KeyCap({ spec, active }: { spec: KeySpec; active: string | null }) {
     <div
       className={
         isActive
-          ? "grid shrink-0 place-items-center rounded-lg bg-accent font-mono text-sm font-semibold text-canvas shadow-[0_0_0_5px_rgba(240,82,58,0.16)]"
+          ? "grid shrink-0 place-items-center rounded-lg bg-accent font-mono text-sm font-semibold text-canvas ring-4 ring-accent/16"
           : "grid shrink-0 place-items-center rounded-lg bg-ink/5 font-mono text-sm font-semibold text-ink/60"
       }
       style={{ width: `${spec.w}px`, height: `${ROW_H}px` }}

@@ -29,7 +29,7 @@ function NextChar({ char }: { char: string }) {
       className={
         "relative text-ink " +
         "after:absolute after:-bottom-1.5 after:left-0 after:right-0 " +
-        "after:h-[3px] after:rounded-sm after:bg-accent after:content-['']"
+        "after:h-0.75 after:rounded-sm after:bg-accent after:content-['']"
       }
     >
       {char}

@@ -90,7 +90,7 @@ function ActiveMarker() {
     <svg
       aria-hidden="true"
       viewBox="0 0 8 5"
-      className="pointer-events-none absolute bottom-full left-1/2 h-[5px] w-2 -translate-x-1/2 -translate-y-[3px] fill-accent"
+      className="pointer-events-none absolute bottom-full left-1/2 h-1.25 w-2 -translate-x-1/2 -translate-y-0.75 fill-accent"
     >
       <polygon points="0,0 8,0 4,5" />
     </svg>

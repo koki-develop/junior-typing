@@ -25,7 +25,7 @@ export function CountdownMessage({ count }: Props) {
         <span
           key={count}
           aria-hidden="true"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-countdown-pop text-[clamp(88px,12vw,144px)] tabular-nums tracking-normal text-accent"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-countdown-pop text-8xl tabular-nums tracking-normal text-accent md:text-9xl"
         >
           {count}
         </span>

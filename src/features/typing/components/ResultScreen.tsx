@@ -41,7 +41,7 @@ export function ResultScreen({ result, onRestart }: Props) {
             カウントアップ開始と同時に一瞬でフェードインさせる。 */}
         <motion.p
           aria-label={`スコア ${result.score}`}
-          className="font-mono text-[clamp(72px,10vw,120px)] font-medium leading-none tracking-tight tabular-nums text-accent"
+          className="font-mono text-7xl font-medium leading-none tracking-tight tabular-nums text-accent md:text-8xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{

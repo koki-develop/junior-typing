@@ -18,34 +18,32 @@ export function TopPage() {
   return (
     <div className="min-h-screen bg-canvas font-round text-ink">
       <header className="border-b border-faint">
-        <div className="mx-auto flex max-w-[1140px] items-center gap-5 px-8 pt-8 pb-7">
+        <div className="mx-auto flex max-w-6xl items-center gap-5 px-8 pt-8 pb-7">
           <div
             aria-hidden="true"
-            className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[18px] bg-accent"
+            className="flex h-15 w-15 shrink-0 items-center justify-center rounded-2xl bg-accent"
           >
-            <span className="text-[30px] font-extrabold leading-none text-canvas">あ</span>
+            <span className="text-3xl font-extrabold leading-none text-canvas">あ</span>
           </div>
           <div className="min-w-0">
-            <h1 className="m-0 text-[28px] font-bold leading-none tracking-tight">
+            <h1 className="m-0 text-3xl font-bold leading-none tracking-tight">
               ジュニアタイピング
             </h1>
-            <p className="mt-2.5 text-[13px] text-muted">
-              タイピングの きほんを、ゆびで まなぼう。
-            </p>
+            <p className="mt-2.5 text-sm text-muted">タイピングの きほんを、ゆびで まなぼう。</p>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1140px] px-8 pt-12 pb-24">
+      <main className="mx-auto max-w-6xl px-8 pt-12 pb-24">
         {groups.map(({ category, sets }) => (
           <section key={category.id} className="mb-12 last:mb-0">
             <div className="mb-5 flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="inline-block h-[18px] w-[18px] rounded-[6px]"
+                className="inline-block h-4.5 w-4.5 rounded-md"
                 style={{ background: category.color }}
               />
-              <h2 className="m-0 text-[22px] font-bold leading-none tracking-tight">
+              <h2 className="m-0 text-2xl font-bold leading-none tracking-tight">
                 {category.label}
               </h2>
             </div>
@@ -70,10 +68,10 @@ function QuestionSetCard({ set }: { set: QuestionSet }) {
     <Link
       to="/play/$setId"
       params={{ setId: set.id }}
-      className="block min-h-[108px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      className="block min-h-27 rounded-2xl border border-faint bg-canvas p-5.5 hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
-      <div className="text-[19px] font-bold leading-tight tracking-tight">{set.title}</div>
-      <div className="mt-2 truncate text-[13px] text-muted">{previewWords(set)}</div>
+      <div className="text-xl font-bold leading-tight tracking-tight">{set.title}</div>
+      <div className="mt-2 truncate text-sm text-muted">{previewWords(set)}</div>
     </Link>
   );
 }

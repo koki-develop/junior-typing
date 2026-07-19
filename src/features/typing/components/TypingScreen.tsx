@@ -26,7 +26,7 @@ export function TypingScreen({ view, title }: Props) {
   return (
     // App.tsx の main と同じ理由で grid-cols を minmax(0,1fr) に固定し、
     // Keyboard（800px 幅）の max-content で列が広がらないようにする。
-    <div className="grid grid-cols-[minmax(0,1fr)] place-items-center gap-16">
+    <div className="grid grid-cols-1 place-items-center gap-16">
       <ProgressBar total={view.total} currentIndex={currentIndex} filling={filling} />
       {/* aria-live 領域は「マウント時点で既に入っていた内容」を読み上げない。
           countdown フェーズで初めてマウントされる CountdownMessage の中に置くと、

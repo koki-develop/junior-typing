@@ -64,7 +64,7 @@ export function PlayPage() {
       {/* grid-cols を明示しないと暗黙の列が子（Keyboard の 800px 幅）の max-content に合わせて広がり、
           画面幅より狭いビューポートでページ全体が横スクロールしてしまう。minmax(0,1fr) で列幅を
           利用可能スペースに固定し、Keyboard 側の縮小スケーリングが機能する余地を作る。 */}
-      <main className="grid grid-cols-[minmax(0,1fr)] place-items-center px-6 pb-16">
+      <main className="grid grid-cols-1 place-items-center px-6 pb-16">
         {/* done ↔ プレイ中の切り替え時にフェードアウト → フェードインで切り替える。
             mode="wait" で先に古い方が消え切ってから新しい方を出すことで、両画面が重なる瞬間を作らない。
             initial={false} は初回マウント（idle）でフェードインを走らせないための指定で、

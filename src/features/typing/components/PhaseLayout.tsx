@@ -34,12 +34,12 @@ export function PhaseLayout({ top, main, bottom }: Props) {
           箱が伸びて下のローマ字段を押し下げる（重ならない）。countdown の数字はこの箱の
           高さに影響しない絶対配置オーバーレイとして描くため、relative を持たせておく
           （leading-none + place-items-center で中央揃えを固定）。 */}
-      <div className="relative grid min-h-[clamp(56px,8vw,88px)] place-items-center text-[clamp(56px,8vw,88px)] font-medium leading-none tracking-[0.04em]">
+      <div className="relative grid min-h-15 place-items-center text-6xl font-medium leading-none tracking-wider md:min-h-18 md:text-7xl">
         {main}
       </div>
       <div
         className={
-          "mt-4 font-mono text-2xl font-semibold tracking-wider md:text-[28px]" +
+          "mt-4 font-mono text-2xl font-semibold tracking-wider md:text-3xl" +
           (bottom === undefined ? " invisible" : "")
         }
         {...(bottom === undefined ? { "aria-hidden": true } : {})}
