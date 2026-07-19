@@ -6,15 +6,14 @@
 // 呼び出し側の TOCTOU 回避のため、比較〜書き込みは recordHighScore に閉じ込め、
 // 外に「読んで比較して書く」オーケストレーションを漏らさない。
 
-import { ACCURACY_MAX, SPEED_MAX } from "../domain/game/score.ts";
+import { MAX_SCORE } from "../domain/game/score.ts";
 
 // localStorage 上のキー。プロジェクト名スコープ + スキーマバージョンサフィックス。
 // スキーマを非互換に変えたら :v2 に上げてキーごと切り替える方針（マイグレーションは書かない）。
 const STORAGE_KEY = "junior-typing:high-scores:v1";
 
-// score.ts の設計上の満点。読み出し時のバリデーションでこの範囲外を弾く。
-// domain の定数を直に参照することで、スコア設計の変更に自動で追従する。
-const MAX_SCORE = ACCURACY_MAX + SPEED_MAX;
+// 読み出し時のバリデーションで score.ts の設計上の満点を上限に使う。
+// 定数そのものを domain から受け取っているので、スコア設計の変更に自動で追従する。
 
 // localStorage 自体が使えない環境（SSR / node の unit テスト / 一部プライベートモード）で
 // クラッシュしないように、window / localStorage の参照は try/catch で包む。

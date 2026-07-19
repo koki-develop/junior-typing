@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ACCURACY_MAX, SPEED_MAX } from "../domain/game/score.ts";
+import { MAX_SCORE } from "../domain/game/score.ts";
 import { getAllHighScores, getHighScore, recordHighScore } from "./highScores.ts";
 
 const STORAGE_KEY = "junior-typing:high-scores:v1";
-const MAX_SCORE = ACCURACY_MAX + SPEED_MAX;
 
 // node の unit プロジェクトで動かすため、Storage 互換の in-memory 実装を毎テスト差し込む。
 // browser の実装差異（SecurityError 等）はテスト対象コード側の try/catch で守っているので、

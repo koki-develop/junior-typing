@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeResult } from "./score.ts";
+import { computeResult, isPerfectScore } from "./score.ts";
 
 const T0 = 1_700_000_000_000;
 
@@ -110,5 +110,22 @@ describe("computeResult", () => {
   it("totalKeys は correct + wrong の合算", () => {
     const result = computeResult({ correctKeys: 7, wrongKeys: 4, startedAt: T0, clearedMs: 0 }, T0);
     expect(result.totalKeys).toBe(11);
+  });
+});
+
+describe("isPerfectScore", () => {
+  it("満点（1000）は true", () => {
+    expect(isPerfectScore(1000)).toBe(true);
+  });
+
+  it("満点未満は false", () => {
+    expect(isPerfectScore(999)).toBe(false);
+    expect(isPerfectScore(500)).toBe(false);
+    expect(isPerfectScore(0)).toBe(false);
+  });
+
+  it("満点を超える値は false（範囲外は満点扱いにしない）", () => {
+    // 通常の経路では起きないが、判定関数の意味を守るため。
+    expect(isPerfectScore(1001)).toBe(false);
   });
 });

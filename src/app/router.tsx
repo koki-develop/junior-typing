@@ -14,6 +14,14 @@ import { SITE_DESCRIPTION, SITE_TITLE, TOP_TITLE } from "./meta.ts";
 // rootRoute は共通シェルを持たない Outlet のみ。将来ページ間で共通のレイアウトが必要になったら
 // ここに RootLayout を挟む。今は各ページが自前で <main> を保持している。
 //
+// ⚠ topology の暗黙前提: topRoute (/) と playRoute (/play/$setId) は rootRoute 直下に
+// フラットに並んでいる（レイアウトを共有しない）ため、両者を行き来すると TopPage / PlayPage は
+// 毎回 unmount → mount で入れ替わる。features/highScores/useHighScores はこの remount 前提に
+// 依存して「マウント時 snapshot」でハイスコアを読む。もし将来 / と /play/$setId を包む
+// 共通レイアウトルートをここに挟むと、TopPage は unmount されなくなり、useHighScores の
+// snapshot が silent に stale になる。topology を変える人は useHighScores の実装を
+// サブスクリプション方式に切り替えること。
+//
 // head で全ページ共通の title/description をデフォルト定義し、子ルートの head が同じ
 // meta name（title / description）を返すとそちらで上書きされる（TanStack Router の
 // ネスト時 dedupe）。charset・viewport・favicon は index.html 側の静的タグに任せており、

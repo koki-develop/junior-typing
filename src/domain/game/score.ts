@@ -37,6 +37,20 @@ export type GameResult = {
 //     数値誤差ケース）: レートを "十分速い" とみなして速度パートを満点扱い。
 export const ACCURACY_MAX = 700;
 export const SPEED_MAX = 300;
+// 満点。上記 2 パートの和として一意に決まる派生値だが、
+// - services/highScores.ts の入力バリデーション上限
+// - トップページの「パーフェクト（1000）」判定
+// のように「満点そのもの」を扱う呼び出し側があり、その都度 ACCURACY_MAX + SPEED_MAX を
+// 書き直させると意味の重複と加算漏れの温床になる。ここで一度だけ定義して配布する。
+export const MAX_SCORE = ACCURACY_MAX + SPEED_MAX;
+
+// 「このスコアはパーフェクト（満点）か？」の判定。
+// UI が === MAX_SCORE を素で書くと、将来スコア設計が変わって「満点」の定義が
+// 「両パート個別に満点を取る」等の複合条件に化けたときに TopPage 側は静かに嘘を返し続ける。
+// 満点の意味の権威をここに一本化する。
+export function isPerfectScore(score: number): boolean {
+  return score === MAX_SCORE;
+}
 // 目標打鍵レート（キー/秒）。これ以上のレートで速度満点。小学生の
 // 中〜高学年で頑張って到達できる 120 kpm 前後の水準を狙う。
 export const TARGET_KEYS_PER_SEC = 2;
