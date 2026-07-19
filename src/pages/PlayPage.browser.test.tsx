@@ -51,11 +51,15 @@ beforeEach(() => {
   // Math.random を固定値にしておけば、同じ入力に対して selectQuestions は常に同じ結果を
   // 返すので、テスト側で PlayPage が内部で選んだのと同じ出題列を再現できる。
   vi.spyOn(Math, "random").mockReturnValue(0.42);
+  // ハイスコア永続化テスト用にストレージをクリア。ブラウザは実 localStorage を持つので、
+  // 前のテストが残した値で後続テストが偽陽性/偽陰性にならないようにする。
+  localStorage.clear();
 });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  localStorage.clear();
 });
 
 // beforeEach で固定した Math.random と同じ状態で呼べば、PlayPage が内部で選ぶ
@@ -128,6 +132,29 @@ test("『もどる』リンクを押すとトップページに戻る", async ()
 
   // TopPage のヘッダ見出し。/play からトップへ確かに遷移したことの目印にする。
   await expect.element(screen.getByRole("heading", { name: "ジュニアタイピング" })).toBeVisible();
+});
+
+test("全問プレイ後、その setId のハイスコアが localStorage に記録される", async () => {
+  const screen = await renderPlayPage();
+
+  await pressKey(" ");
+  await advanceTimers(COUNTDOWN_STEP_MS * 3);
+  await playAllQuestions();
+  // done への遷移で effect が発火してから DOM に反映されるのを待つため、
+  // ResultScreen の出現を明示的に待機する。
+  await expect.element(screen.getByText("スコア")).toBeVisible();
+
+  // 保存キーとスキーマは services/highScores.ts の実装で決めた JSON blob 形式。
+  // 記録されたスコア値そのものはタイマーの実時間の影響を受けるので、
+  // ここでは「setId のエントリが存在し、値が 0..1000 の整数」であることだけを検証する。
+  const raw = localStorage.getItem("junior-typing:high-scores:v1");
+  expect(raw).not.toBeNull();
+  const parsed = JSON.parse(raw ?? "{}") as Record<string, unknown>;
+  const score = parsed["land-animals"];
+  expect(typeof score).toBe("number");
+  expect(Number.isInteger(score)).toBe(true);
+  expect(score).toBeGreaterThanOrEqual(0);
+  expect(score).toBeLessThanOrEqual(1000);
 });
 
 test("結果画面から Space キーで idle に戻り、再度プレイを開始できる", async () => {

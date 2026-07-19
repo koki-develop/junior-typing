@@ -7,6 +7,7 @@ import type { Question } from "../domain/questions/types.ts";
 import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
+import { recordHighScore } from "../services/highScores.ts";
 
 // done ↔ プレイ中の切り替え時のフェード時間。フェードアウト → フェードインの合計時間は
 // この定数の2倍（AnimatePresence の mode="wait" で直列に走るため）。
@@ -48,6 +49,17 @@ export function PlayPage() {
     }
     previousPhaseRef.current = view.phase;
   }, [view.phase, questionSet]);
+
+  // done 到達時にハイスコアを記録する。表示は後続セッションで実装するので、ここでは書き込みだけ。
+  // done 中のスコア（number）を切り出して依存に載せることで、
+  // 「非 done → done」の遷移でのみ effect が発火する。done phase 中はスコアが不変なので
+  // 依存値も同一で、同一プレイ中の多重書き込みは起きない。「もういちど」で done → idle に戻ると
+  // doneScore が null に戻り、次に done へ入ったときは新しいスコアで再び発火する。
+  const doneScore = view.phase === "done" ? view.result.score : null;
+  useEffect(() => {
+    if (doneScore === null) return;
+    recordHighScore(setId, doneScore);
+  }, [doneScore, setId]);
 
   return (
     // header 行 + main 行の 2 段。main 側は残り高さいっぱいを取り、その中で place-items-center
