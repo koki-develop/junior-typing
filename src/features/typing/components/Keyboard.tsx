@@ -5,8 +5,8 @@ type Props = {
   activeKey: string | null;
 };
 
-// MacBook JIS 配列を再現した鍵盤ビジュアル。次に打鍵すべきアルファベット、
-// または idle 画面での Space キーだけ柿色で塗り、それ以外（数字・記号・修飾・矢印）は無地で並べる。
+// MacBook JIS 配列を再現した鍵盤ビジュアル。次に打鍵すべきアルファベット・数字・-、
+// または idle 画面での Space キーだけ柿色で塗り、それ以外（^・¥・記号・修飾・矢印）は無地で並べる。
 // esc, fn キーは仕様外なので描かない（ファンクション段自体を持たない）。
 // 純粋な視覚ヒントで、操作可能ではない（aria-hidden）。
 //
@@ -72,8 +72,8 @@ export function Keyboard({ activeKey }: Props) {
 type KeySpec = {
   // 可視幅（px）。行内の合計 + ギャップが KEYBOARD_WIDTH と一致するよう決めてある。
   w: number;
-  // アルファベットキーのみ letter を持ち、activeKey と一致すれば強調される。
-  // 数字・記号・修飾キーは無地表示なので undefined。
+  // letter を持つキー（アルファベット・数字・-）は文字表記され、activeKey と一致すれば強調される。
+  // それ以外の記号・修飾キーは無地表示なので undefined。
   letter?: string;
   // アルファベット以外で強調対象になるキー（現状 Space のみ）。activeKey と一致すれば強調される。
   special?: "space";
@@ -99,18 +99,20 @@ const KEYBOARD_HEIGHT = ROW_H * 5 + GAP * 4;
 const SHADOW_PAD = 6;
 
 // 数字段。1 と delete だけ「少し横長」で、他の 12 キーは標準幅。合計 2*60 + 12*48 + 13*8 = 800。
+// 1〜9・0・- はアルファベットキーと同様 letter を持たせ、文字表記と強調表示の対象にする。
+// ^ と ¥ は入力対象外なので letter なし（無地表示のまま）。
 const ROW_NUMBERS: KeySpec[] = [
-  { w: WIDER_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
-  { w: ALPHA_W },
+  { w: WIDER_W, letter: "1" },
+  { w: ALPHA_W, letter: "2" },
+  { w: ALPHA_W, letter: "3" },
+  { w: ALPHA_W, letter: "4" },
+  { w: ALPHA_W, letter: "5" },
+  { w: ALPHA_W, letter: "6" },
+  { w: ALPHA_W, letter: "7" },
+  { w: ALPHA_W, letter: "8" },
+  { w: ALPHA_W, letter: "9" },
+  { w: ALPHA_W, letter: "0" },
+  { w: ALPHA_W, letter: "-" },
   { w: ALPHA_W },
   { w: ALPHA_W },
   { w: WIDER_W },
