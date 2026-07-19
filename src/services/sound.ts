@@ -16,6 +16,8 @@ const SOUND_NAMES = {
   page: "page",
   error: "error",
   success: "success",
+  chime: "chime",
+  sparkle: "sparkle",
 } satisfies Record<GameSound, SoundName>;
 
 export function playSound(sound: GameSound): void {

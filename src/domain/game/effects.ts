@@ -1,6 +1,6 @@
 // domain は cuelume に依存しない。実際に使う効果音だけを独自 union として定義し、
 // SoundName への変換は呼び出し側（services 層）に委ねる。
-export type GameSound = "bloom" | "ready" | "page" | "error" | "success";
+export type GameSound = "bloom" | "ready" | "page" | "error" | "success" | "chime" | "sparkle";
 
 // schedule effect が「delayMs 後に send し直したい」イベントの型。
 // GameEvent 本体は now(ms) を持つが、schedule では発火時点の時刻を
