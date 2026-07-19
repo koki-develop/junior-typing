@@ -117,7 +117,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
         <button
           type="button"
           onClick={onRestart}
-          className="rounded-full bg-accent px-8 py-3 font-round text-2xl font-medium text-canvas transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          className="cursor-pointer rounded-full bg-accent px-8 py-3 font-round text-2xl font-medium text-canvas transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           もういちど
         </button>
