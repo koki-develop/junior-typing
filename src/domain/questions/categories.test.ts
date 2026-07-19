@@ -22,7 +22,7 @@ describe("CATEGORIES", () => {
   it("存在する id を渡すと該当する Category を返す", () => {
     expect(findCategory("animals")).toEqual({
       id: "animals",
-      label: "どうぶつ",
+      label: "いきもの",
       color: "#d97706",
     });
   });

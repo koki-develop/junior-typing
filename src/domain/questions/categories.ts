@@ -10,7 +10,7 @@ export type Category = {
 };
 
 export const CATEGORIES: Category[] = [
-  { id: "animals", label: "どうぶつ", color: "#d97706" },
+  { id: "animals", label: "いきもの", color: "#d97706" },
   { id: "foods", label: "たべもの", color: "#ef4444" },
   { id: "vehicles", label: "のりもの", color: "#3b82f6" },
   { id: "sports", label: "スポーツ", color: "#22c55e" },

@@ -12,18 +12,18 @@ import { selectQuestions } from "../domain/questions/select.ts";
 import { buildPatterns } from "../domain/romaji/patterns.ts";
 import { advanceTimers, pressKey } from "../test/browser-helpers.ts";
 
-// テストは常に /play/animals で PlayPage をマウントする。PlayPage は useParams({ from: "/play/$setId" })
+// テストは常に /play/land-animals で PlayPage をマウントする。PlayPage は useParams({ from: "/play/$setId" })
 // を使うのでルータコンテキスト必須。プロダクションと同じ routeTree を memory history で回す。
 function renderPlayPage() {
   const router = createRouter({
     routeTree,
-    history: createMemoryHistory({ initialEntries: ["/play/animals"] }),
+    history: createMemoryHistory({ initialEntries: ["/play/land-animals"] }),
   });
   return render(<RouterProvider router={router} />);
 }
 
-const animalsSet = findQuestionSet("animals");
-if (!animalsSet) throw new Error("test fixture missing: questionSets に 'animals' がない");
+const animalsSet = findQuestionSet("land-animals");
+if (!animalsSet) throw new Error("test fixture missing: questionSets に 'land-animals' がない");
 const animalsPool = animalsSet.questions;
 const animalsQuestionCount = animalsSet.questionCount;
 
