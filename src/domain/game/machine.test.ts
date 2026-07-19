@@ -77,7 +77,7 @@ describe("transition", () => {
         questionIndex: 0,
         typingState: createTypingState(singleMoraQuestions[0].kana),
         cleared: false,
-        stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0 },
+        stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
       });
       expect(result.effects).toEqual([{ type: "playSound", sound: "ready" }]);
     });
@@ -89,6 +89,7 @@ describe("transition", () => {
         correctKeys: 0,
         wrongKeys: 0,
         startedAt: T0,
+        clearedMs: 0,
       });
       const result = transition(state, { type: "key", key: "a", now: T0 }, twoMoraQuestions);
       expect(result.state).toEqual({
@@ -96,7 +97,7 @@ describe("transition", () => {
         questionIndex: 0,
         typingState: { ...createTypingState(twoMoraQuestions[0].kana), unitIndex: 1, typed: "a" },
         cleared: false,
-        stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0 },
+        stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
       });
       expect(result.effects).toEqual([{ type: "playSound", sound: "page" }]);
     });
@@ -106,28 +107,33 @@ describe("transition", () => {
         correctKeys: 2,
         wrongKeys: 0,
         startedAt: T0,
+        clearedMs: 0,
       });
       const result = transition(state, { type: "key", key: "x", now: T0 }, singleMoraQuestions);
       // 打鍵内容自体は typingState には反映されず、stats.wrongKeys だけが +1 される。
       expect(result.state).toEqual({
         ...state,
-        stats: { correctKeys: 2, wrongKeys: 1, startedAt: T0 },
+        stats: { correctKeys: 2, wrongKeys: 1, startedAt: T0, clearedMs: 0 },
       });
       expect(result.effects).toEqual([{ type: "playSound", sound: "error" }]);
     });
 
-    it("最終モーラを確定させる正解キーで cleared=true, correctKeys+1 になり、page・success・advanceのスケジュールを積む", () => {
+    it("最終モーラを確定させる正解キーで cleared=true, correctKeys+1 になり、clearedAt を焼き込み page・success・advanceのスケジュールを積む", () => {
       const state = playingState(0, singleMoraQuestions[0].kana, false, {
         correctKeys: 3,
         wrongKeys: 1,
         startedAt: T0,
+        clearedMs: 0,
       });
-      const result = transition(state, { type: "key", key: "a", now: T0 }, singleMoraQuestions);
+      const now = T0 + 500;
+      const result = transition(state, { type: "key", key: "a", now }, singleMoraQuestions);
       expect(result.state).toMatchObject({
         phase: "playing",
         questionIndex: 0,
         cleared: true,
-        stats: { correctKeys: 4, wrongKeys: 1, startedAt: T0 },
+        // 入力不可時間の計測起点として、cleared 化と同じ now を焼き込む。
+        clearedAt: now,
+        stats: { correctKeys: 4, wrongKeys: 1, startedAt: T0, clearedMs: 0 },
       });
       expect(result.effects).toEqual([
         { type: "playSound", sound: "page" },
@@ -136,7 +142,8 @@ describe("transition", () => {
       ]);
     });
 
-    it("advance（次の問題あり）で次の問題に進み、stats はそのまま引き継がれ ready音を鳴らす", () => {
+    it("advance（次の問題あり）で clearedMs にクリア演出時間が積まれ、次の問題に進む", () => {
+      const clearedAt = T0 + 2000;
       const clearedState: GameState = {
         phase: "playing",
         questionIndex: 0,
@@ -146,11 +153,13 @@ describe("transition", () => {
           typed: "a",
         },
         cleared: true,
-        stats: { correctKeys: 5, wrongKeys: 2, startedAt: T0 },
+        clearedAt,
+        stats: { correctKeys: 5, wrongKeys: 2, startedAt: T0, clearedMs: 0 },
       };
+      const advanceNow = clearedAt + 600; // CLEAR_DELAY_MS 相当の演出時間
       const result = transition(
         clearedState,
-        { type: "advance", now: T0 + 1000 },
+        { type: "advance", now: advanceNow },
         singleMoraQuestions,
       );
       expect(result.state).toEqual({
@@ -158,12 +167,15 @@ describe("transition", () => {
         questionIndex: 1,
         typingState: createTypingState(singleMoraQuestions[1].kana),
         cleared: false,
-        stats: { correctKeys: 5, wrongKeys: 2, startedAt: T0 },
+        // clearedMs には advance-clearedAt が加算され、次問への遷移で
+        // clearedAt はリセット（undefined）される。
+        stats: { correctKeys: 5, wrongKeys: 2, startedAt: T0, clearedMs: 600 },
       });
       expect(result.effects).toEqual([{ type: "playSound", sound: "ready" }]);
     });
 
-    it("最終問題の advance で done に遷移し、stats と endedAt を焼き込み effects は空", () => {
+    it("最終問題の advance で done に遷移し、clearedMs を積んで endedAt を焼き込み effects は空", () => {
+      const clearedAt = T0 + 10_000;
       const clearedState: GameState = {
         phase: "playing",
         questionIndex: singleMoraQuestions.length - 1,
@@ -173,9 +185,10 @@ describe("transition", () => {
           typed: "i",
         },
         cleared: true,
-        stats: { correctKeys: 7, wrongKeys: 3, startedAt: T0 },
+        clearedAt,
+        stats: { correctKeys: 7, wrongKeys: 3, startedAt: T0, clearedMs: 600 },
       };
-      const endedAt = T0 + 12_345;
+      const endedAt = clearedAt + 700; // setTimeout がぶれて 700ms 掛かった想定
       const result = transition(
         clearedState,
         { type: "advance", now: endedAt },
@@ -183,7 +196,8 @@ describe("transition", () => {
       );
       expect(result.state).toEqual({
         phase: "done",
-        stats: { correctKeys: 7, wrongKeys: 3, startedAt: T0 },
+        // 既存 clearedMs(600) + 今回のクリア演出(endedAt - clearedAt = 700) = 1300
+        stats: { correctKeys: 7, wrongKeys: 3, startedAt: T0, clearedMs: 1300 },
         endedAt,
       });
       expect(result.effects).toEqual([]);
@@ -193,7 +207,7 @@ describe("transition", () => {
   describe("done", () => {
     const doneState: GameState = {
       phase: "done",
-      stats: { correctKeys: 5, wrongKeys: 1, startedAt: T0 },
+      stats: { correctKeys: 5, wrongKeys: 1, startedAt: T0, clearedMs: 0 },
       endedAt: T0 + 5000,
     };
 
@@ -222,10 +236,13 @@ describe("transition", () => {
       correctKeys: 1,
       wrongKeys: 0,
       startedAt: T0,
+      clearedMs: 0,
     });
     // cleared: true の typingState は「打ち切り済み」相当にしておく。
+    // clearedAt も cleared: true の不変条件として付与する。
     const clearedPlayingStateFinished: GameState = {
       ...clearedPlayingState,
+      clearedAt: T0,
       typingState: {
         ...createTypingState(singleMoraQuestions[0].kana),
         unitIndex: 1,
@@ -236,10 +253,11 @@ describe("transition", () => {
       correctKeys: 0,
       wrongKeys: 0,
       startedAt: T0,
+      clearedMs: 0,
     });
     const doneState: GameState = {
       phase: "done",
-      stats: { correctKeys: 5, wrongKeys: 1, startedAt: T0 },
+      stats: { correctKeys: 5, wrongKeys: 1, startedAt: T0, clearedMs: 0 },
       endedAt: T0 + 5000,
     };
 

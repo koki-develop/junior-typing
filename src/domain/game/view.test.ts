@@ -24,7 +24,7 @@ describe("selectView", () => {
   });
 
   it("done は total と computeResult 済みの result を持つ", () => {
-    const stats = { correctKeys: 8, wrongKeys: 2, startedAt: T0 };
+    const stats = { correctKeys: 8, wrongKeys: 2, startedAt: T0, clearedMs: 0 };
     const endedAt = T0 + 15_500;
     const state: GameState = { phase: "done", stats, endedAt };
     expect(selectView(state, questions)).toEqual({
@@ -40,7 +40,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState: createTypingState(questions[0].kana),
       cleared: false,
-      stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0 },
+      stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
     };
     const view = selectView(state, questions);
     expect(view).toEqual({
@@ -66,7 +66,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState,
       cleared: false,
-      stats: { correctKeys: 3, wrongKeys: 0, startedAt: T0 },
+      stats: { correctKeys: 3, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
     };
     const view = selectView(state, questions);
     expect(view).toMatchObject({
@@ -86,7 +86,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState,
       cleared: true,
-      stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0 },
+      stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
     };
     const view = selectView(state, [{ text: "あ", kana: "あ" }]);
     expect(view).toEqual({

@@ -3,19 +3,23 @@ import { expect, test, vi } from "vitest";
 import type { GameResult } from "../../../domain/game/score.ts";
 import { ResultScreen } from "./ResultScreen.tsx";
 
+// 40 打鍵中 3 ミス、12.4 秒でクリアした想定。
+// accuracy = 700 * 40/43 ≈ 651.16
+// actualKps = 40*1000/12400 ≈ 3.226 keys/sec → 目標 2.0 以上で速度満点 300
+// score = round(651.16 + 300) = 951
 const sampleResult: GameResult = {
   correctKeys: 40,
   wrongKeys: 3,
   totalKeys: 43,
   elapsedMs: 12_400,
-  score: 375,
+  score: 951,
 };
 
 test("スコア・打鍵数・ミス数・かかった時間・ボタンをすべて描画する", async () => {
   const screen = await render(<ResultScreen result={sampleResult} onRestart={() => {}} />);
 
   await expect.element(screen.getByText("スコア")).toBeVisible();
-  await expect.element(screen.getByLabelText("スコア 375")).toBeVisible();
+  await expect.element(screen.getByLabelText("スコア 951")).toBeVisible();
   // 数値は他のラベル値と衝突するので dt/dd ペアのラベル経由でヒットさせる。
   await expect.element(screen.getByText("うったキー")).toBeVisible();
   await expect.element(screen.getByRole("definition").filter({ hasText: /^43$/ })).toBeVisible();

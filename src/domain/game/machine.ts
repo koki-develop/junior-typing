@@ -18,6 +18,10 @@ export type GameState =
       questionIndex: number;
       typingState: TypingState;
       cleared: boolean;
+      // cleared: true になった瞬間の時刻（ms）。advance 発火時に
+      // (event.now - clearedAt) を stats.clearedMs へ加算して
+      // 「入力不可だった時間」を計測する。cleared: false のときは undefined。
+      clearedAt?: number;
       stats: PlayingStats;
     }
   | { phase: "done"; stats: PlayingStats; endedAt: number };
@@ -28,10 +32,14 @@ export type CountdownValue = 3 | 2 | 1;
 // - correctKeys : typeKey が correct=true を返した打鍵の総数（モーラ確定の有無に関わらず1ずつ加算）。
 // - wrongKeys   : typeKey が correct=false を返した打鍵の総数。
 // - startedAt   : countdown 完了 → playing 開始の瞬間の時刻（ms）。done での経過時間計算の起点。
+// - clearedMs   : クリア演出（cleared: true → advance）の累積時間（ms）。この間は
+//                 入力が握り潰されるので、スコアの速度パートは elapsedMs から
+//                 これを差し引いた「実際に打鍵可能だった時間」で評価する。
 export type PlayingStats = {
   correctKeys: number;
   wrongKeys: number;
   startedAt: number;
+  clearedMs: number;
 };
 
 // GameEvent は「いつ発生したか」を now(ms) として持ち込む。
@@ -121,6 +129,7 @@ export function transition(
         correctKeys: 0,
         wrongKeys: 0,
         startedAt: event.now,
+        clearedMs: 0,
       });
     }
 
@@ -128,15 +137,24 @@ export function transition(
       if (event.type === "advance") {
         // クリア演出タイマー経由でしか来ない想定だが、cleared 以外は無視する。
         if (!state.cleared) return { state, effects: [] };
+        // cleared: true になった瞬間から advance までの実測時間を clearedMs に積む。
+        // setTimeout の遅延ぶれも含めて "入力不可だった時間" を正確に計測できる。
+        // clearedAt は cleared: true と同時にセットされる不変条件だが、undefined を
+        // 数値扱いすると NaN を作るので防御的に event.now でフォールバックする。
+        const clearedElapsed = event.now - (state.clearedAt ?? event.now);
+        const nextStats: PlayingStats = {
+          ...state.stats,
+          clearedMs: state.stats.clearedMs + clearedElapsed,
+        };
         const nextIndex = state.questionIndex + 1;
         if (nextIndex >= questions.length) {
           // 最終問題クリア → done。endedAt は最後の advance の now を採用する。
           return {
-            state: { phase: "done", stats: state.stats, endedAt: event.now },
+            state: { phase: "done", stats: nextStats, endedAt: event.now },
             effects: [],
           };
         }
-        return enterQuestion(questions, nextIndex, state.stats);
+        return enterQuestion(questions, nextIndex, nextStats);
       }
 
       if (event.type !== "key") return { state, effects: [] };
@@ -161,8 +179,16 @@ export function transition(
         };
       }
       // ここで questionIndex を進めず、演出を挟むために cleared だけ立てる。
+      // clearedAt に "入力不可" の起点時刻を焼き込み、advance でこれ以降の
+      // 実経過時間を stats.clearedMs へ加算できるようにする。
       return {
-        state: { ...state, typingState: result.state, cleared: true, stats: nextStats },
+        state: {
+          ...state,
+          typingState: result.state,
+          cleared: true,
+          clearedAt: event.now,
+          stats: nextStats,
+        },
         effects: [
           { type: "playSound", sound: "page" },
           { type: "playSound", sound: "success" },
