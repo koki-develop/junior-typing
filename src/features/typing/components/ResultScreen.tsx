@@ -2,6 +2,7 @@ import { animate, useMotionValue, useTransform } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect } from "react";
 import { type GameResult, isPerfectScore } from "../../../domain/game/score.ts";
+import { fireConfetti } from "../../../services/confetti.ts";
 import type { HighScoreInfo } from "../../../services/highScores.ts";
 import { playSound } from "../../../services/sound.ts";
 
@@ -49,10 +50,12 @@ type Props = {
 //
 // ハイスコア関連の分岐:
 //   - 新記録時（isNewHigh=true）: スコアの上に「ハイスコア！」バッジ。
-//     さらに満点（isPerfectScore）なら文言を「パーフェクト！」に切り替える。
-//     カウントアップ完了と同時に spring で登場して達成感を演出する。
+//     さらに満点（isPerfectScore）なら文言を「パーフェクト！」に切り替え、
+//     confetti も発火する。カウントアップ完了と同時に spring で登場して達成感を演出する。
 //   - 未更新時（isNewHigh=false）: stat 群の下に「ハイスコア N」を控えめに表示。
-//     カウントアップの余韻が落ち着いてから静かに fade in する。
+//     カウントアップの余韻が落ち着いてから静かに fade in する。満点でも confetti は
+//     出さない（初めて満点を取った回に既に見せているはずで、リプレイのたびに
+//     出すと演出が摩耗する）。
 //   - highScoreInfo=null: 両方非表示。derived state が確定する前の防衛値であり、
 //     通常運用では発生しない（PlayPage で render 同期に prop を確定させている）。
 export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
@@ -64,6 +67,9 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
   // 「パーフェクト！」への切り替えは「今回のスコアが満点」で判定する。
   // isNewHigh との組み合わせでのみ意味を持つ（未更新時はバッジ自体が出ない）。
   const perfect = isPerfectScore(result.score);
+  // confetti は「パーフェクト！」バッジと同じ条件（新記録 かつ 満点）でだけ発火する。
+  // バッジ文言との整合を保ちつつ、満点を維持したままのリプレイでは出さない。
+  const celebratePerfect = isNewHigh && perfect;
   return (
     <div className="grid place-items-center gap-10 text-center">
       <div className="grid place-items-center gap-2">
@@ -83,7 +89,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
             ease: "easeOut",
           }}
         >
-          <AnimatedScoreValue target={result.score} />
+          <AnimatedScoreValue target={result.score} celebrate={celebratePerfect} />
         </m.p>
       </div>
 
@@ -217,21 +223,25 @@ function StatRow({
 // スコアの数字を 0 から target までカウントアップする。
 // MotionValue を子として渡すと motion が自動購読して現在値を描画する。
 // 親の <p> が font-mono + tabular-nums なので、桁数が増えても数字幅は変わらずレイアウトは安定。
-function AnimatedScoreValue({ target }: { target: number }) {
+// celebrate=true（新記録 かつ 満点）のときは、スコアが確定した瞬間に confetti も発火する。
+function AnimatedScoreValue({ target, celebrate }: { target: number; celebrate: boolean }) {
   const count = useMotionValue(0);
   const rounded = useTransform(count, (v) => Math.round(v));
   useEffect(() => {
     // onComplete は animate() が自然完了したフレームで呼ばれ、途中で stop() された場合は呼ばれない。
-    // スコアが確定するフレームと sparkle の再生を同じタイミングに揃えるため、
-    // 別 setTimeout ではなく animate() の onComplete で音を鳴らす。
+    // スコアが確定するフレームと sparkle の再生・confetti の発火を同じタイミングに揃えるため、
+    // 別 setTimeout ではなく animate() の onComplete でまとめて実行する。
     const controls = animate(count, target, {
       delay: SCORE_COUNTUP_DELAY_SEC,
       duration: SCORE_COUNTUP_DURATION_SEC,
       ease: SCORE_COUNTUP_EASE,
-      onComplete: () => playSound("sparkle"),
+      onComplete: () => {
+        playSound("sparkle");
+        if (celebrate) fireConfetti();
+      },
     });
     return () => controls.stop();
-  }, [count, target]);
+  }, [count, target, celebrate]);
   return <m.span>{rounded}</m.span>;
 }
 
