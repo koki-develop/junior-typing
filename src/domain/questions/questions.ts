@@ -5,7 +5,7 @@ export const questionSets: QuestionSet[] = [
     id: "animals",
     title: "どうぶつ",
     category: "animals",
-    questionCount: 10,
+    questionCount: 6,
     questions: [
       { text: "犬", kana: "いぬ" },
       { text: "ねこ", kana: "ねこ" },
@@ -32,7 +32,7 @@ export const questionSets: QuestionSet[] = [
     id: "foods",
     title: "たべもの",
     category: "foods",
-    questionCount: 10,
+    questionCount: 6,
     questions: [
       { text: "りんご", kana: "りんご" },
       { text: "バナナ", kana: "ばなな" },
@@ -58,7 +58,7 @@ export const questionSets: QuestionSet[] = [
     id: "vehicles",
     title: "のりもの",
     category: "vehicles",
-    questionCount: 10,
+    questionCount: 6,
     questions: [
       { text: "電車", kana: "でんしゃ" },
       { text: "バス", kana: "ばす" },
@@ -81,7 +81,7 @@ export const questionSets: QuestionSet[] = [
     id: "sports",
     title: "スポーツ",
     category: "sports",
-    questionCount: 10,
+    questionCount: 6,
     questions: [
       { text: "野球", kana: "やきゅう" },
       { text: "サッカー", kana: "さっかー" },
@@ -104,7 +104,7 @@ export const questionSets: QuestionSet[] = [
     id: "school",
     title: "がっこう",
     category: "school",
-    questionCount: 10,
+    questionCount: 6,
     questions: [
       { text: "国語", kana: "こくご" },
       { text: "算数", kana: "さんすう" },
