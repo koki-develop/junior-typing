@@ -63,14 +63,14 @@ export function TopPage() {
   );
 }
 
-// セットカード。カード全体が唯一のクリック対象。ホバーは枠色 + 淡い影のみで、
+// セットカード。カード全体が唯一のクリック対象。ホバーは枠色のみで、
 // アニメーション（transition/transform）は載せない（デザインの明示要件）。
 function QuestionSetCard({ set }: { set: QuestionSet }) {
   return (
     <Link
       to="/play/$setId"
       params={{ setId: set.id }}
-      className="block min-h-[108px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent hover:shadow-[0_12px_28px_-16px_rgba(35,32,28,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      className="block min-h-[108px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       <div className="text-[19px] font-bold leading-tight tracking-tight">{set.title}</div>
       <div className="mt-2 truncate text-[13px] text-muted">{previewWords(set)}</div>
