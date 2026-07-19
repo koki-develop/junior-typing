@@ -224,16 +224,6 @@ describe("transition", () => {
       expect(result.state).toEqual({ phase: "idle" });
       expect(result.effects).toEqual([]);
     });
-
-    it("Space キーでも idle に戻る（idle 開始と対称的な操作）", () => {
-      const result = transition(
-        doneState,
-        { type: "key", key: " ", now: T0 + 6000 },
-        singleMoraQuestions,
-      );
-      expect(result.state).toEqual({ phase: "idle" });
-      expect(result.effects).toEqual([]);
-    });
   });
 
   // 「イベントを無視して同一参照の state を返し、effects も積まない」系のケースをまとめる。
@@ -318,6 +308,11 @@ describe("transition", () => {
         name: "done: 非 START_KEY 打鍵",
         state: doneState,
         event: { type: "key", key: "a", now: T0 },
+      },
+      {
+        name: "done: Space キー（もう有効なリスタートトリガーではない）",
+        state: doneState,
+        event: { type: "key", key: " ", now: T0 },
       },
       { name: "done: tick", state: doneState, event: { type: "tick", now: T0 } },
       { name: "done: advance", state: doneState, event: { type: "advance", now: T0 } },

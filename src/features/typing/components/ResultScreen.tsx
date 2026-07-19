@@ -46,7 +46,7 @@ type Props = {
 
 // 全問クリア後に表示する結果画面。
 // スコアを大きく強調しつつ、小学生向けに漢字を控えたラベルで打鍵数・ミス数・時間を並べる。
-// 「もういちど」ボタンでリスタート。キーボードでは Space でも再開できる（machine.ts の done で処理）。
+// 「もういちど」ボタンでリスタート。
 //
 // ハイスコア関連の分岐:
 //   - 新記録時（isNewHigh=true）: スコアの上に「ハイスコア！」バッジ。
@@ -121,7 +121,6 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
         >
           もういちど
         </button>
-        <span className="text-muted">スペースキーでもう1回</span>
       </div>
     </div>
   );

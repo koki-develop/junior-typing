@@ -60,7 +60,7 @@ export const COUNTDOWN_START: CountdownValue = 3;
 export const COUNTDOWN_STEP_MS = 1000;
 // クリア演出を挟む時間。この間は入力を無視し、演出のあとに次の問題へ進める。
 export const CLEAR_DELAY_MS = 600;
-// idle からの開始トリガー / done からのリスタートトリガー。event.key の値で比較する。
+// idle からの開始トリガー。event.key の値で比較する。
 export const START_KEY = " ";
 
 export function createInitialState(): GameState {
@@ -198,12 +198,8 @@ export function transition(
     }
 
     case "done": {
-      // 結果画面からの「もういちど」で idle に戻る。ボタン経由の restart と
-      // キーボードからの START_KEY（idle と対称的に Space で再開）を同一に扱う。
+      // 結果画面からの「もういちど」ボタン経由の restart のみで idle に戻る。
       if (event.type === "restart") {
-        return { state: createInitialState(), effects: [] };
-      }
-      if (event.type === "key" && event.key === START_KEY) {
         return { state: createInitialState(), effects: [] };
       }
       return { state, effects: [] };
