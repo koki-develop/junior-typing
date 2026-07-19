@@ -52,28 +52,35 @@ type Props = {
 //   - 新記録時（isNewHigh=true）: スコアの上に「ハイスコア！」バッジ。
 //     さらに満点（isPerfectScore）なら文言を「パーフェクト！」に切り替え、
 //     confetti も発火する。カウントアップ完了と同時に spring で登場して達成感を演出する。
-//   - 未更新時（isNewHigh=false）: stat 群の下に「ハイスコア N」を控えめに表示。
-//     カウントアップの余韻が落ち着いてから静かに fade in する。満点でも confetti は
-//     出さない（初めて満点を取った回に既に見せているはずで、リプレイのたびに
-//     出すと演出が摩耗する）。
+//   - 満点維持時（isNewHigh=false かつ満点）: 記録上は「更新なし」（同点は更新しない
+//     仕様。services/highScores.ts 参照）だが、天井（MAX_SCORE）に張り付いている状態は
+//     実質的に「今回も満点」という達成であり、"未達成" のような参考行を出すのは誤解を招く。
+//     バッジは新記録時と同じ「パーフェクト！」を出す一方、confetti は新規達成時のみに
+//     絞る（毎回出すと演出が摩耗するため）。
+//   - 未更新時（isNewHigh=false かつ非満点）: stat 群の下に「ハイスコア N」を控えめに
+//     表示。カウントアップの余韻が落ち着いてから静かに fade in する。
 //   - highScoreInfo=null: 両方非表示。derived state が確定する前の防衛値であり、
 //     通常運用では発生しない（PlayPage で render 同期に prop を確定させている）。
 export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
   const isNewHigh = highScoreInfo?.isNewHigh === true;
-  // isNewHigh=true のときの previousHigh は "前回のハイスコア" だが、参考行として
-  // 出すのは「更新できなかった」ケースだけ。isNewHigh の分岐で明確に切り出す。
-  const previousHighToShow =
-    highScoreInfo !== null && !highScoreInfo.isNewHigh ? highScoreInfo.previousHigh : null;
-  // 「パーフェクト！」への切り替えは「今回のスコアが満点」で判定する。
-  // isNewHigh との組み合わせでのみ意味を持つ（未更新時はバッジ自体が出ない）。
+  // 「パーフェクト！」への切り替え・バッジ表示可否は「今回のスコアが満点」で判定する。
+  // isNewHigh=false でも満点なら "天井を維持している" という達成なのでバッジは出す。
+  // ただし highScoreInfo=null（derived state 未確定の防衛値）のときは perfect の値に
+  // 関わらず両方非表示にする不変条件を守るため、明示的にガードする。
   const perfect = isPerfectScore(result.score);
-  // confetti は「パーフェクト！」バッジと同じ条件（新記録 かつ 満点）でだけ発火する。
-  // バッジ文言との整合を保ちつつ、満点を維持したままのリプレイでは出さない。
+  const showBadge = highScoreInfo !== null && (isNewHigh || perfect);
+  // 参考行として前回ハイスコアを出すのは「更新できず、かつ今回も満点でない」ケースだけ。
+  // 満点維持はバッジ側で完結して見せるので、二重表示を避ける。
+  const previousHighToShow =
+    highScoreInfo !== null && !isNewHigh && !perfect ? highScoreInfo.previousHigh : null;
+  // confetti は「新記録 かつ 満点」のときだけ発火する。バッジは満点維持でも出すが、
+  // confetti は初めて満点を取った回に既に見せているはずで、リプレイのたびに
+  // 出すと演出が摩耗するため、新規達成時に絞る。
   const celebratePerfect = isNewHigh && perfect;
   return (
     <div className="grid place-items-center gap-10 text-center">
       <div className="grid place-items-center gap-2">
-        {isNewHigh && <HighScoreBadge perfect={perfect} />}
+        {showBadge && <HighScoreBadge perfect={perfect} />}
         <p className="text-lg tracking-[0.28em] text-muted">スコア</p>
         {/* aria-label は最終値の固定文字列。カウントアップ中の途中値を読み上げさせない。
             opacity 0 でスタートさせて「開始時に 0 が大きく表示される」印象を避け、
@@ -120,7 +127,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
   );
 }
 
-// 新記録時にスコアラベルの上に出す「達成」バッジ。
+// 新記録時、および満点を維持したリプレイ時にスコアラベルの上に出す「達成」バッジ。
 // perfect=true のときは文言を「パーフェクト！」に切り替える（TopPage のパーフェクト
 // 特別扱いと語彙を揃える）。星や絵文字は使わない（TopPage が絵文字回避で ★ 記号を
 // 使っている一方、ここでは文字装飾を最小にして "文言 + アニメーション + accent 色" の
@@ -149,8 +156,10 @@ function HighScoreBadge({ perfect }: { perfect: boolean }) {
   );
 }
 
-// 未更新時に stat 群の下に控えめに出す「これまでのハイスコア」表示。
-// トップページのカードと同じ "ハイスコア N" の語彙で揃える（未来の変更で片方だけ
+// 未更新（かつ非満点）時に stat 群の下に控えめに出す「これまでのハイスコア」表示。
+// 満点維持のケースはバッジ側で完結させるのでここには出さない（呼び出し側の
+// previousHighToShow で除外済み）。トップページのカードと同じ "ハイスコア N" の
+// 語彙で揃える（未来の変更で片方だけ
 // 表現が変わると、同じ値なのに違って見える）。数字は tabular-nums で桁揃え。
 // バッジのような登場演出はせず、opacity fade だけで静かに現れる。
 //
