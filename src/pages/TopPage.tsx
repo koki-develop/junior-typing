@@ -21,7 +21,7 @@ export function TopPage() {
         <div className="mx-auto flex max-w-[1140px] items-center gap-5 px-8 pt-8 pb-7">
           <div
             aria-hidden="true"
-            className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[18px] bg-accent shadow-[0_8px_20px_-10px_rgba(240,82,58,0.5)]"
+            className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[18px] bg-accent"
           >
             <span className="text-[30px] font-extrabold leading-none text-canvas">あ</span>
           </div>
