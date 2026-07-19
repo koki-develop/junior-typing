@@ -2,7 +2,7 @@ import type { QuestionSet } from "./types.ts";
 
 export const questionSets: QuestionSet[] = [
   {
-    id: "hiragana-a-ko",
+    id: "hiragana-a-ka",
     title: "あいうえお・かきくけこ",
     category: "hiragana",
     questionCount: 10,
@@ -21,7 +21,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-sa-to",
+    id: "hiragana-sa-ta",
     title: "さしすせそ・たちつてと",
     category: "hiragana",
     questionCount: 10,
@@ -40,7 +40,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-na-ho",
+    id: "hiragana-na-ha",
     title: "なにぬねの・はひふへほ",
     category: "hiragana",
     questionCount: 10,
@@ -59,7 +59,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-ma-yo",
+    id: "hiragana-ma-ya",
     title: "まみむめも・やゆよ",
     category: "hiragana",
     questionCount: 8,
@@ -76,7 +76,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-ra-n",
+    id: "hiragana-ra-wa",
     title: "らりるれろ・わをん",
     category: "hiragana",
     questionCount: 8,
@@ -93,7 +93,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-dakuten-ga-za",
+    id: "hiragana-ga-za",
     title: "がぎぐげご・ざじずぜぞ",
     category: "hiragana",
     questionCount: 10,
@@ -112,7 +112,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-dakuten-da-ba",
+    id: "hiragana-da-ba",
     title: "だぢづでど・ばびぶべぼ",
     category: "hiragana",
     questionCount: 10,
@@ -131,7 +131,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-handakuten",
+    id: "hiragana-pa",
     title: "ぱぴぷぺぽ",
     category: "hiragana",
     questionCount: 5,
@@ -145,7 +145,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-youon-kya-sha-cha",
+    id: "hiragana-kya-sya-tya",
     title: "きゃきゅきょ・しゃしゅしょ・ちゃちゅちょ",
     category: "hiragana",
     questionCount: 9,
@@ -163,7 +163,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-youon-nya-hya",
+    id: "hiragana-nya-hya",
     title: "にゃにゅにょ・ひゃひゅひょ",
     category: "hiragana",
     questionCount: 6,
@@ -178,7 +178,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-youon-mya-rya",
+    id: "hiragana-mya-rya",
     title: "みゃみゅみょ・りゃりゅりょ",
     category: "hiragana",
     questionCount: 6,
@@ -193,7 +193,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-youon-gya-ja",
+    id: "hiragana-gya-zya",
     title: "ぎゃぎゅぎょ・じゃじゅじょ",
     category: "hiragana",
     questionCount: 6,
@@ -208,7 +208,7 @@ export const questionSets: QuestionSet[] = [
     ],
   },
   {
-    id: "hiragana-youon-bya-pya",
+    id: "hiragana-bya-pya",
     title: "びゃびゅびょ・ぴゃぴゅぴょ",
     category: "hiragana",
     questionCount: 6,
