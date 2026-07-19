@@ -72,7 +72,8 @@ function expectedActiveQuestions() {
 
 async function playAllQuestions(): Promise<void> {
   for (const question of expectedActiveQuestions()) {
-    await typeString(firstCandidateRomaji(question.kana));
+    // 複数読みが定義されていても、代表読み（kanas[0]）どおりに打てば必ず完走できる。
+    await typeString(firstCandidateRomaji(question.kanas[0]));
     // 丸演出の CLEAR_DELAY_MS を進めないと次の問題（または done）へ遷移しない。
     await advanceTimers(CLEAR_DELAY_MS);
   }

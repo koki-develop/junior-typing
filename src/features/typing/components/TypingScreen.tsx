@@ -51,7 +51,10 @@ function PlayfieldCenter({ view, title }: Props) {
     case "playing":
       return (
         <QuestionDisplay
-          kana={view.question.kana}
+          // 現在アクティブな読み方（複数読みなら代表→切替後の生き残り）を表示に採用する。
+          // view.question.kanas を直接読まないのは、切替のロジックを domain 側（selectView）に
+          // 閉じ込めるため。
+          kana={view.kana}
           text={view.question.text}
           typed={view.typed}
           next={view.next}

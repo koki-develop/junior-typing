@@ -9,7 +9,7 @@ function makeSet(texts: string[]): QuestionSet {
     category: "animals",
     questionCount: 1,
     randomOrder: true,
-    questions: texts.map((text) => ({ text, kana: "あ" })),
+    questions: texts.map((text) => ({ text, kanas: ["あ"] })),
   };
 }
 

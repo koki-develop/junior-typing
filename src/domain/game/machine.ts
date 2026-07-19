@@ -79,7 +79,7 @@ function enterQuestion(
     state: {
       phase: "playing",
       questionIndex: index,
-      typingState: createTypingState(questions[index].kana),
+      typingState: createTypingState(questions[index].kanas),
       cleared: false,
       stats,
     },

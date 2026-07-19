@@ -6,8 +6,8 @@ import { computeResult } from "./score.ts";
 import { selectView } from "./view.ts";
 
 const questions: Question[] = [
-  { text: "こんにちは", kana: "こんにちは" },
-  { text: "ありがとう", kana: "ありがとう" },
+  { text: "こんにちは", kanas: ["こんにちは"] },
+  { text: "ありがとう", kanas: ["ありがとう"] },
 ];
 
 const T0 = 1_700_000_000_000;
@@ -38,7 +38,7 @@ describe("selectView", () => {
     const state: GameState = {
       phase: "playing",
       questionIndex: 0,
-      typingState: createTypingState(questions[0].kana),
+      typingState: createTypingState(questions[0].kanas),
       cleared: false,
       stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
     };
@@ -48,6 +48,8 @@ describe("selectView", () => {
       total: 2,
       questionIndex: 0,
       question: questions[0],
+      // 単一読みなので kana は kanas[0] そのまま。
+      kana: "こんにちは",
       typed: "",
       next: "k",
       rest: "onnnitiha",
@@ -57,7 +59,7 @@ describe("selectView", () => {
 
   it("playing の入力途中は typed/next/rest が入力位置に沿って分割される", () => {
     // "kon" まで打鍵した状態を作り、次の1文字と残りの分割を検証する
-    let typingState = createTypingState(questions[0].kana);
+    let typingState = createTypingState(questions[0].kanas);
     for (const key of "kon") {
       typingState = typeKey(typingState, key).state;
     }
@@ -79,7 +81,7 @@ describe("selectView", () => {
 
   it("playing の cleared 中は入力が完了しきっており next/rest が空になる", () => {
     // 短い問題を全部打ち切って cleared 相当の typingState を作る
-    let typingState = createTypingState("あ");
+    let typingState = createTypingState(["あ"]);
     typingState = typeKey(typingState, "a").state;
     const state: GameState = {
       phase: "playing",
@@ -88,16 +90,58 @@ describe("selectView", () => {
       cleared: true,
       stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
     };
-    const view = selectView(state, [{ text: "あ", kana: "あ" }]);
+    const view = selectView(state, [{ text: "あ", kanas: ["あ"] }]);
     expect(view).toEqual({
       phase: "playing",
       total: 1,
       questionIndex: 0,
-      question: { text: "あ", kana: "あ" },
+      question: { text: "あ", kanas: ["あ"] },
+      kana: "あ",
       typed: "a",
       next: "",
       rest: "",
       cleared: true,
+    });
+  });
+
+  it("複数読みの playing 初期状態は kana に代表読み（kanas[0]）を採用する", () => {
+    const question: Question = { text: "上", kanas: ["うえ", "じょう"] };
+    const state: GameState = {
+      phase: "playing",
+      questionIndex: 0,
+      typingState: createTypingState(question.kanas),
+      cleared: false,
+      stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
+    };
+    const view = selectView(state, [question]);
+    expect(view).toMatchObject({
+      kana: "うえ",
+      typed: "",
+      next: "u",
+      rest: "e",
+    });
+  });
+
+  it("代表読みが脱落したら kana と ローマ字ヒントが次のアクティブ読みに切り替わる", () => {
+    // "j" は「うえ」に一致せず「じょう」の候補と一致するので、先頭アクティブが「じょう」に。
+    const question: Question = { text: "上", kanas: ["うえ", "じょう"] };
+    let typingState = createTypingState(question.kanas);
+    typingState = typeKey(typingState, "j").state;
+    const state: GameState = {
+      phase: "playing",
+      questionIndex: 0,
+      typingState,
+      cleared: false,
+      stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
+    };
+    const view = selectView(state, [question]);
+    expect(view).toMatchObject({
+      // ふりがなが次の読みに切り替わる
+      kana: "じょう",
+      typed: "j",
+      // 残り "ou"（jo の残り "o" + 次モーラ「う」の "u"）
+      next: "o",
+      rest: "u",
     });
   });
 });

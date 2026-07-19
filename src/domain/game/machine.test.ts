@@ -1,17 +1,30 @@
 import { describe, expect, it } from "vitest";
 import type { Question } from "../questions/types.ts";
-import { createTypingState } from "../romaji/typing.ts";
+import { createTypingState, typeKey } from "../romaji/typing.ts";
+import type { TypingState } from "../romaji/typing.ts";
 import { CLEAR_DELAY_MS, COUNTDOWN_STEP_MS, createInitialState, transition } from "./machine.ts";
 import type { GameEvent, GameState, PlayingStats } from "./machine.ts";
 
+// createTypingState(kanas) → 指定キー列を順に受理させた TypingState を返す。
+// 「1問クリア済み相当の typingState を手で組み立てる」ためのテストヘルパー。
+// TypingState の内部形（tracks/activeMask）が将来変わってもテスト側は typeKey 経由で
+// 「正しく打ち切った結果の状態」を作れる。
+function typedTypingState(kanas: string[], keys: string): TypingState {
+  let state = createTypingState(kanas);
+  for (const key of keys) {
+    state = typeKey(state, key).state;
+  }
+  return state;
+}
+
 // 単モーラの問題2問。1打鍵で確定させて cleared / advance 周りを検証しやすくする。
 const singleMoraQuestions: Question[] = [
-  { text: "あ", kana: "あ" },
-  { text: "い", kana: "い" },
+  { text: "あ", kanas: ["あ"] },
+  { text: "い", kanas: ["い"] },
 ];
 
 // 2モーラの問題1問。「正解だが未完」の遷移を検証するために使う。
-const twoMoraQuestions: Question[] = [{ text: "あい", kana: "あい" }];
+const twoMoraQuestions: Question[] = [{ text: "あい", kanas: ["あい"] }];
 
 // テスト用の任意時刻。stats の startedAt / endedAt へ焼き込まれる値としてのみ意味を持つ。
 const T0 = 1_700_000_000_000;
@@ -22,14 +35,14 @@ const T0 = 1_700_000_000_000;
 type PlayingState = Extract<GameState, { phase: "playing" }>;
 function playingState(
   questionIndex: number,
-  kana: string,
+  kanas: string[],
   cleared: boolean,
   stats: PlayingStats,
 ): PlayingState {
   return {
     phase: "playing",
     questionIndex,
-    typingState: createTypingState(kana),
+    typingState: createTypingState(kanas),
     cleared,
     stats,
   };
@@ -75,7 +88,7 @@ describe("transition", () => {
       expect(result.state).toEqual({
         phase: "playing",
         questionIndex: 0,
-        typingState: createTypingState(singleMoraQuestions[0].kana),
+        typingState: createTypingState(singleMoraQuestions[0].kanas),
         cleared: false,
         stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
       });
@@ -85,7 +98,7 @@ describe("transition", () => {
 
   describe("playing", () => {
     it("正解キー（未完）で typingState が進み、correctKeys がインクリメントされ page音を鳴らす", () => {
-      const state = playingState(0, twoMoraQuestions[0].kana, false, {
+      const state = playingState(0, twoMoraQuestions[0].kanas, false, {
         correctKeys: 0,
         wrongKeys: 0,
         startedAt: T0,
@@ -95,7 +108,7 @@ describe("transition", () => {
       expect(result.state).toEqual({
         phase: "playing",
         questionIndex: 0,
-        typingState: { ...createTypingState(twoMoraQuestions[0].kana), unitIndex: 1, typed: "a" },
+        typingState: typedTypingState(twoMoraQuestions[0].kanas, "a"),
         cleared: false,
         stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0, clearedMs: 0 },
       });
@@ -103,7 +116,7 @@ describe("transition", () => {
     });
 
     it("誤りキーは typingState は変わらないが wrongKeys をインクリメントし error音のみ鳴らす", () => {
-      const state = playingState(0, singleMoraQuestions[0].kana, false, {
+      const state = playingState(0, singleMoraQuestions[0].kanas, false, {
         correctKeys: 2,
         wrongKeys: 0,
         startedAt: T0,
@@ -119,7 +132,7 @@ describe("transition", () => {
     });
 
     it("最終モーラを確定させる正解キーで cleared=true, correctKeys+1 になり、clearedAt を焼き込み page・success・advanceのスケジュールを積む", () => {
-      const state = playingState(0, singleMoraQuestions[0].kana, false, {
+      const state = playingState(0, singleMoraQuestions[0].kanas, false, {
         correctKeys: 3,
         wrongKeys: 1,
         startedAt: T0,
@@ -147,11 +160,7 @@ describe("transition", () => {
       const clearedState: GameState = {
         phase: "playing",
         questionIndex: 0,
-        typingState: {
-          ...createTypingState(singleMoraQuestions[0].kana),
-          unitIndex: 1,
-          typed: "a",
-        },
+        typingState: typedTypingState(singleMoraQuestions[0].kanas, "a"),
         cleared: true,
         clearedAt,
         stats: { correctKeys: 5, wrongKeys: 2, startedAt: T0, clearedMs: 0 },
@@ -165,7 +174,7 @@ describe("transition", () => {
       expect(result.state).toEqual({
         phase: "playing",
         questionIndex: 1,
-        typingState: createTypingState(singleMoraQuestions[1].kana),
+        typingState: createTypingState(singleMoraQuestions[1].kanas),
         cleared: false,
         // clearedMs には advance-clearedAt が加算され、次問への遷移で
         // clearedAt はリセット（undefined）される。
@@ -179,11 +188,10 @@ describe("transition", () => {
       const clearedState: GameState = {
         phase: "playing",
         questionIndex: singleMoraQuestions.length - 1,
-        typingState: {
-          ...createTypingState(singleMoraQuestions[singleMoraQuestions.length - 1].kana),
-          unitIndex: 1,
-          typed: "i",
-        },
+        typingState: typedTypingState(
+          singleMoraQuestions[singleMoraQuestions.length - 1].kanas,
+          "i",
+        ),
         cleared: true,
         clearedAt,
         stats: { correctKeys: 7, wrongKeys: 3, startedAt: T0, clearedMs: 600 },
@@ -232,7 +240,7 @@ describe("transition", () => {
   // 状態やイベントの組み合わせが違うだけで assert 内容は共通なので、個別 it に展開すると
   // コピペになる。it.each のテーブルに列挙し、カバレッジは元の個別テストと同数に保つ。
   describe("無視されるイベント（同一参照 state・空 effects）", () => {
-    const clearedPlayingState = playingState(0, singleMoraQuestions[0].kana, true, {
+    const clearedPlayingState = playingState(0, singleMoraQuestions[0].kanas, true, {
       correctKeys: 1,
       wrongKeys: 0,
       startedAt: T0,
@@ -243,13 +251,9 @@ describe("transition", () => {
     const clearedPlayingStateFinished: GameState = {
       ...clearedPlayingState,
       clearedAt: T0,
-      typingState: {
-        ...createTypingState(singleMoraQuestions[0].kana),
-        unitIndex: 1,
-        typed: "a",
-      },
+      typingState: typedTypingState(singleMoraQuestions[0].kanas, "a"),
     };
-    const notClearedPlayingState = playingState(0, singleMoraQuestions[0].kana, false, {
+    const notClearedPlayingState = playingState(0, singleMoraQuestions[0].kanas, false, {
       correctKeys: 0,
       wrongKeys: 0,
       startedAt: T0,

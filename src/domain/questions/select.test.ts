@@ -3,11 +3,11 @@ import { selectQuestions } from "./select.ts";
 import type { Question } from "./types.ts";
 
 const pool: Question[] = [
-  { text: "あ", kana: "あ" },
-  { text: "い", kana: "い" },
-  { text: "う", kana: "う" },
-  { text: "え", kana: "え" },
-  { text: "お", kana: "お" },
+  { text: "あ", kanas: ["あ"] },
+  { text: "い", kanas: ["い"] },
+  { text: "う", kanas: ["う"] },
+  { text: "え", kanas: ["え"] },
+  { text: "お", kanas: ["お"] },
 ];
 
 describe("selectQuestions", () => {
