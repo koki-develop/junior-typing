@@ -21,14 +21,14 @@ function getHighlightedKeyCaps(container: HTMLElement) {
   return container.querySelectorAll(".bg-accent.rounded-lg");
 }
 
-test("idle: 進捗 0 / KeyCap 強調なし / IdleMessage / live 領域は空", async () => {
+test("idle: 進捗 0 / Space キーの KeyCap 強調 / IdleMessage / live 領域は空", async () => {
   const view = { phase: "idle", total: 5 } satisfies GameView;
   const screen = await render(<TypingScreen view={view} />);
 
   const bar = screen.getByRole("progressbar", { name: "タイピング進捗" });
   await expect.element(bar).toHaveAttribute("aria-valuenow", "0");
 
-  expect(getHighlightedKeyCaps(screen.container)).toHaveLength(0);
+  expect(getHighlightedKeyCaps(screen.container)).toHaveLength(1);
 
   await expect.element(screen.getByText("スタート")).toBeVisible();
 

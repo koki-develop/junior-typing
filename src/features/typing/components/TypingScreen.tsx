@@ -15,7 +15,8 @@ type Props = {
 // フェーズ遷移中に周囲のレイアウトが跳ねないようにする。
 export function TypingScreen({ view }: Props) {
   const currentIndex = view.phase === "playing" ? view.questionIndex : 0;
-  const activeKey = view.phase === "playing" ? view.next || null : null;
+  const activeKey =
+    view.phase === "playing" ? view.next || null : view.phase === "idle" ? "space" : null;
   return (
     // App.tsx の main と同じ理由で grid-cols を minmax(0,1fr) に固定し、
     // Keyboard（800px 幅）の max-content で列が広がらないようにする。

@@ -5,8 +5,8 @@ type Props = {
   activeKey: string | null;
 };
 
-// MacBook JIS 配列を再現した鍵盤ビジュアル。次に打鍵すべきアルファベットだけ
-// 柿色で塗り、それ以外（数字・記号・修飾・矢印）は無地で並べる。
+// MacBook JIS 配列を再現した鍵盤ビジュアル。次に打鍵すべきアルファベット、
+// または idle 画面での Space キーだけ柿色で塗り、それ以外（数字・記号・修飾・矢印）は無地で並べる。
 // esc, fn キーは仕様外なので描かない（ファンクション段自体を持たない）。
 // 純粋な視覚ヒントで、操作可能ではない（aria-hidden）。
 //
@@ -33,7 +33,10 @@ export function Keyboard({ activeKey }: Props) {
     <div
       ref={wrapperRef}
       className="mx-auto w-full overflow-hidden"
-      style={{ maxWidth: `${KEYBOARD_WIDTH}px`, height: `${KEYBOARD_HEIGHT * scale}px` }}
+      style={{
+        maxWidth: `${KEYBOARD_WIDTH}px`,
+        height: `${(KEYBOARD_HEIGHT + SHADOW_PAD) * scale}px`,
+      }}
     >
       <div
         className="flex flex-col"
@@ -72,6 +75,8 @@ type KeySpec = {
   // アルファベットキーのみ letter を持ち、activeKey と一致すれば強調される。
   // 数字・記号・修飾キーは無地表示なので undefined。
   letter?: string;
+  // アルファベット以外で強調対象になるキー（現状 Space のみ）。activeKey と一致すれば強調される。
+  special?: "space";
 };
 
 const GAP = 8;
@@ -89,6 +94,9 @@ const ARROW_AREA_W = ARROW_W * 3 + GAP * 2;
 const KEYBOARD_WIDTH = 800;
 // 可視 5 段（数字 / QWERTY / ASDF / ZXCV / Space）× ROW_H + 段間ギャップ 4 個分。
 const KEYBOARD_HEIGHT = ROW_H * 5 + GAP * 4;
+// 強調時の box-shadow（0 0 0 5px）が最下段（Space）で欠けないよう、
+// ラッパーの overflow-hidden の高さにだけ足しておく余白。他の 3 辺はギャップ（8px）内で収まる。
+const SHADOW_PAD = 6;
 
 // 数字段。1 と delete だけ「少し横長」で、他の 12 キーは標準幅。合計 2*60 + 12*48 + 13*8 = 800。
 const ROW_NUMBERS: KeySpec[] = [
@@ -166,7 +174,7 @@ const ROW_SPACE: KeySpec[] = [
   { w: ALPHA_W },
   { w: WIDER_W },
   { w: WIDER_W },
-  { w: SPACE_W },
+  { w: SPACE_W, special: "space" },
   { w: WIDER_W },
   { w: WIDER_W },
   { w: ALPHA_W },
@@ -183,7 +191,9 @@ function KeyRow({ keys, active }: { keys: KeySpec[]; active: string | null }) {
 }
 
 function KeyCap({ spec, active }: { spec: KeySpec; active: string | null }) {
-  const isActive = spec.letter != null && active === spec.letter;
+  const isActive =
+    (spec.letter != null && active === spec.letter) ||
+    (spec.special != null && active === spec.special);
   return (
     <div
       className={

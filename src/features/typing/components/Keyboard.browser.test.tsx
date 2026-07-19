@@ -15,6 +15,14 @@ test("activeKey に対応する KeyCap 1 つだけを強調する", async () => 
   expect(highlighted[0].textContent).toBe("F");
 });
 
+test("activeKey が space のときは Space キーだけが強調される", async () => {
+  const screen = await render(<Keyboard activeKey="space" />);
+
+  const highlighted = screen.container.querySelectorAll(".bg-accent");
+  expect(highlighted).toHaveLength(1);
+  expect(highlighted[0].textContent).toBe("");
+});
+
 test("activeKey が null のときはどれも強調されない", async () => {
   const screen = await render(<Keyboard activeKey={null} />);
 
