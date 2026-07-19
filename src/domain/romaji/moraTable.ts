@@ -27,7 +27,7 @@ export const MORA_TABLE: Record<string, string[]> = {
   の: ["no"],
   は: ["ha"],
   ひ: ["hi"],
-  ふ: ["fu", "hu"],
+  ふ: ["hu", "fu"],
   へ: ["he"],
   ほ: ["ho"],
   ま: ["ma"],
