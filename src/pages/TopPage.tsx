@@ -114,6 +114,14 @@ export function TopPage() {
 // aria-label を set.title に明示指定しているのは、Link 配下に置いた「ハイスコア XXX」の
 // テキストがそのままアクセシブル名に連結されると読み上げが冗長になるため。カード全体の
 // 役割はあくまで「セットに入るリンク」なので、その名前はセットのタイトルに絞る。
+//
+// data-cuelume-press="press" は cuelume の宣言的バインディング（src/app/main.tsx で
+// bindInteractionSounds() により一度だけ有効化）。onMouseDown を自前で書かないのは、
+// cuelume 側がポインタ種別判定を既に実装しているため。ゲーム進行中の効果音（useTypingGame
+// 経由の playSound）とは異なり、これは GameEffect を介さない純粋な UI マイクロインタラクション
+// なので直接属性で表現する。
+// hover 側の data-cuelume-hover="tick" は一度試したが、カード数が多く並ぶ画面で鳴りが
+// うるさかったため見送った。
 function QuestionSetCard({ set, highScore }: { set: QuestionSet; highScore: number | null }) {
   const isPerfect = highScore !== null && isPerfectScore(highScore);
   const isPlayed = highScore !== null;
@@ -139,6 +147,7 @@ function QuestionSetCard({ set, highScore }: { set: QuestionSet; highScore: numb
       to="/play/$setId"
       params={{ setId: set.id }}
       aria-label={set.title}
+      data-cuelume-press="press"
       className={`group block min-h-27 rounded-2xl bg-canvas p-5.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${borderClass}`}
     >
       <div className="text-xl font-bold leading-tight tracking-tight group-hover:text-accent">

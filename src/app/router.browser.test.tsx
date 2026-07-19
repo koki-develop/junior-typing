@@ -3,8 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 
 // PlayPage → useTypingGame → services/sound.ts 経由で cuelume が読み込まれる。
-// 本テストは routeTree のパス解決だけを確かめる目的なので、実 play を空にしておく。
-vi.mock("cuelume", () => ({ play: vi.fn() }));
+// 本テストは routeTree のパス解決だけを確かめる目的なので、実 play/bind を空にしておく。
+vi.mock("cuelume", () => ({ play: vi.fn(), bind: vi.fn() }));
 
 import { SITE_DESCRIPTION, SITE_TITLE, TOP_TITLE } from "./meta.ts";
 import { routeTree } from "./router.tsx";

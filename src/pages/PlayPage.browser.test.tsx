@@ -155,6 +155,14 @@ test("『もどる』リンクを押すとトップページに戻る", async ()
   await expect.element(screen.getByRole("heading", { name: "ジュニアタイピング" })).toBeVisible();
 });
 
+test("『もどる』リンクには press=press の cuelume 属性が付く", async () => {
+  const screen = await renderPlayPage();
+
+  await expect
+    .element(screen.getByRole("link", { name: "もどる" }))
+    .toHaveAttribute("data-cuelume-press", "press");
+});
+
 test("Strict Mode 下でも初回完走でハイスコア更新バッジが表示される（回帰: recordHighScore を render 中に呼んでいた頃は isNewHigh が反転していた）", async () => {
   // 本番の main.tsx と同じく <StrictMode> でラップして render すると、コンポーネントの
   // render 関数は 1 回のパスにつき 2 度実行される。旧実装は recordHighScore を render

@@ -97,6 +97,7 @@ export function PlayPage() {
       <header className="px-6 pt-6">
         <Link
           to="/"
+          data-cuelume-press="press"
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-lg text-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
           <span aria-hidden="true">←</span>

@@ -8,6 +8,12 @@ import "@fontsource/m-plus-rounded-1c/800.css";
 import "@fontsource-variable/jetbrains-mono/index.css";
 import "./index.css";
 import { router } from "./router.tsx";
+import { bindInteractionSounds } from "../services/sound.ts";
+
+// data-cuelume-hover / data-cuelume-press 属性による効果音を document 全体に対して
+// 一度だけ有効化する。委譲リスナーなので後から追加される DOM（TanStack Router の
+// 画面遷移で入れ替わるカードなど）にも再バインド不要で効く。
+bindInteractionSounds();
 
 // index.html の静的 <title>/<meta name="description"> は JS 実行前（pre-hydration・非JSクローラー）
 // 向けのフォールバック。React 19 の <title>/<meta> 自動 hoisting は React 自身が描画したタグ同士でしか

@@ -58,6 +58,16 @@ test("経過時間は 1 秒未満でも 0.X びょうで表示される", async 
     .toBeVisible();
 });
 
+test("「もういちど」ボタンには press=press の cuelume 属性が付く", async () => {
+  const screen = await render(
+    <ResultScreen result={sampleResult} highScoreInfo={null} onRestart={() => {}} />,
+  );
+
+  await expect
+    .element(screen.getByRole("button", { name: "もういちど" }))
+    .toHaveAttribute("data-cuelume-press", "press");
+});
+
 test("「もういちど」ボタンをクリックすると onRestart が呼ばれる", async () => {
   const onRestart = vi.fn();
   const screen = await render(

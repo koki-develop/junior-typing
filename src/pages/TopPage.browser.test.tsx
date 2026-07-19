@@ -162,6 +162,20 @@ test("hover は group / group-hover:text-accent 構造で title 要素だけを 
   await expect.element(card.getByText("どうぶつ")).toHaveClass("group-hover:text-accent");
 });
 
+test("カードには press=press の cuelume 属性が付く", async () => {
+  const screen = await renderTopPage();
+
+  // 実際の再生確認は services/sound.test.ts（cuelume を mock した unit テスト）で行う。
+  // ここでは cuelume の bind() が拾う data 属性がカード（Link）に正しく載っていることだけを
+  // 構造として lock する。hover 側（data-cuelume-hover）はうるさかったため見送っており、
+  // 意図的に付けていない。
+  for (const set of questionSets) {
+    const card = screen.getByRole("link", { name: set.title });
+    await expect.element(card).toHaveAttribute("data-cuelume-press", "press");
+    await expect.element(card).not.toHaveAttribute("data-cuelume-hover");
+  }
+});
+
 test("カードのアクセシブル名はセットタイトルのみで、ハイスコア値は含めない", async () => {
   // Link 配下にハイスコアテキストを置くと、accessible name の自動連結で
   // 読み上げが「セット名 サンプル語 ハイスコア 800」のように冗長になる。

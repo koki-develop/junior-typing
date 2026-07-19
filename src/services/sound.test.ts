@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("cuelume", () => ({ play: vi.fn() }));
+vi.mock("cuelume", () => ({ play: vi.fn(), bind: vi.fn() }));
 
-import { play } from "cuelume";
+import { bind, play } from "cuelume";
 import type { GameSound } from "../domain/game/effects.ts";
-import { playSound } from "./sound.ts";
+import { bindInteractionSounds, playSound } from "./sound.ts";
 
 // GameSound の全パターンを it.each で網羅する。新しい音を GameSound に足しても
 // ここに追記しない限り検出されない（satisfies によるコンパイルエラーとは独立に、
@@ -14,6 +14,7 @@ const GAME_SOUNDS: readonly GameSound[] = ["bloom", "ready", "page", "error", "s
 
 beforeEach(() => {
   vi.mocked(play).mockClear();
+  vi.mocked(bind).mockClear();
 });
 
 describe("playSound", () => {
@@ -26,4 +27,12 @@ describe("playSound", () => {
       expect(play).toHaveBeenCalledWith(sound);
     },
   );
+});
+
+describe("bindInteractionSounds", () => {
+  it("cuelume の bind を呼び出す", () => {
+    bindInteractionSounds();
+
+    expect(bind).toHaveBeenCalledTimes(1);
+  });
 });
