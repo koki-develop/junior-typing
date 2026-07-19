@@ -2,12 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { Question } from "../questions/types.ts";
 import { createTypingState, typeKey } from "../romaji/typing.ts";
 import type { GameState } from "./machine.ts";
+import { computeResult } from "./score.ts";
 import { selectView } from "./view.ts";
 
 const questions: Question[] = [
   { text: "こんにちは", kana: "こんにちは" },
   { text: "ありがとう", kana: "ありがとう" },
 ];
+
+const T0 = 1_700_000_000_000;
 
 describe("selectView", () => {
   it("idle は total のみを持つ", () => {
@@ -20,9 +23,15 @@ describe("selectView", () => {
     expect(selectView(state, questions)).toEqual({ phase: "countdown", total: 2, count: 3 });
   });
 
-  it("done は total のみを持つ", () => {
-    const state: GameState = { phase: "done" };
-    expect(selectView(state, questions)).toEqual({ phase: "done", total: 2 });
+  it("done は total と computeResult 済みの result を持つ", () => {
+    const stats = { correctKeys: 8, wrongKeys: 2, startedAt: T0 };
+    const endedAt = T0 + 15_500;
+    const state: GameState = { phase: "done", stats, endedAt };
+    expect(selectView(state, questions)).toEqual({
+      phase: "done",
+      total: 2,
+      result: computeResult(stats, endedAt),
+    });
   });
 
   it("playing の初期状態は typed が空で next/rest が全体を表す", () => {
@@ -31,6 +40,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState: createTypingState(questions[0].kana),
       cleared: false,
+      stats: { correctKeys: 0, wrongKeys: 0, startedAt: T0 },
     };
     const view = selectView(state, questions);
     expect(view).toEqual({
@@ -56,6 +66,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState,
       cleared: false,
+      stats: { correctKeys: 3, wrongKeys: 0, startedAt: T0 },
     };
     const view = selectView(state, questions);
     expect(view).toMatchObject({
@@ -75,6 +86,7 @@ describe("selectView", () => {
       questionIndex: 0,
       typingState,
       cleared: true,
+      stats: { correctKeys: 1, wrongKeys: 0, startedAt: T0 },
     };
     const view = selectView(state, [{ text: "あ", kana: "あ" }]);
     expect(view).toEqual({

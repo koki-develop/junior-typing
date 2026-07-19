@@ -3,6 +3,8 @@
 import type { Question } from "../questions/types.ts";
 import { romajiDisplay } from "../romaji/typing.ts";
 import type { CountdownValue, GameState } from "./machine.ts";
+import { computeResult } from "./score.ts";
+import type { GameResult } from "./score.ts";
 
 export type GameView =
   | { phase: "idle"; total: number }
@@ -19,7 +21,7 @@ export type GameView =
       // 1 問クリア直後の演出中フラグ。この間は入力を受け付けない。
       cleared: boolean;
     }
-  | { phase: "done"; total: number };
+  | { phase: "done"; total: number; result: GameResult };
 
 export function selectView(state: GameState, questions: readonly Question[]): GameView {
   const total = questions.length;
@@ -29,7 +31,7 @@ export function selectView(state: GameState, questions: readonly Question[]): Ga
     case "countdown":
       return { phase: "countdown", total, count: state.count };
     case "done":
-      return { phase: "done", total };
+      return { phase: "done", total, result: computeResult(state.stats, state.endedAt) };
     case "playing": {
       const { typed, remaining } = romajiDisplay(state.typingState);
       return {

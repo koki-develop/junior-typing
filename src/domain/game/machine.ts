@@ -8,20 +8,41 @@ import type { GameEffect } from "./effects.ts";
 
 // - idle       : 開始待ち。スペースキーでカウントダウンへ。
 // - countdown  : 3 → 2 → 1 の秒読み。打鍵は無視。
-// - playing    : 通常のタイピング進行。
-// - done       : 全問クリア後。
+// - playing    : 通常のタイピング進行。stats に打鍵の正誤数と開始時刻を持つ。
+// - done       : 全問クリア後。結果画面に必要な統計と終了時刻を持つ。
 export type GameState =
   | { phase: "idle" }
   | { phase: "countdown"; count: CountdownValue }
-  | { phase: "playing"; questionIndex: number; typingState: TypingState; cleared: boolean }
-  | { phase: "done" };
+  | {
+      phase: "playing";
+      questionIndex: number;
+      typingState: TypingState;
+      cleared: boolean;
+      stats: PlayingStats;
+    }
+  | { phase: "done"; stats: PlayingStats; endedAt: number };
 
 export type CountdownValue = 3 | 2 | 1;
 
+// playing 中に積み上げる統計。
+// - correctKeys : typeKey が correct=true を返した打鍵の総数（モーラ確定の有無に関わらず1ずつ加算）。
+// - wrongKeys   : typeKey が correct=false を返した打鍵の総数。
+// - startedAt   : countdown 完了 → playing 開始の瞬間の時刻（ms）。done での経過時間計算の起点。
+export type PlayingStats = {
+  correctKeys: number;
+  wrongKeys: number;
+  startedAt: number;
+};
+
+// GameEvent は「いつ発生したか」を now(ms) として持ち込む。
+// transition は純粋関数のまま時刻を扱うための唯一の入口で、
+// 実行側（useTypingGame の send / setTimeout コールバック）で Date.now() を焼き込む。
+// restart だけは done → idle のリセットに時刻を使わないので now を持たない。
 export type GameEvent =
-  | { type: "key"; key: string } // 小文字化済みの 1 文字
-  | { type: "tick" } // カウントダウンを 1 段進める
-  | { type: "advance" }; // クリア演出終了 → 次の問題へ
+  | { type: "key"; key: string; now: number } // 小文字化済みの 1 文字
+  | { type: "tick"; now: number } // カウントダウンを 1 段進める
+  | { type: "advance"; now: number } // クリア演出終了 → 次の問題（または done）へ
+  | { type: "restart" }; // done → idle
 
 export type TransitionResult = { state: GameState; effects: GameEffect[] };
 
@@ -31,7 +52,7 @@ export const COUNTDOWN_START: CountdownValue = 3;
 export const COUNTDOWN_STEP_MS = 1000;
 // クリア演出を挟む時間。この間は入力を無視し、演出のあとに次の問題へ進める。
 export const CLEAR_DELAY_MS = 600;
-// idle からの開始トリガー。event.key の値で比較する。
+// idle からの開始トリガー / done からのリスタートトリガー。event.key の値で比較する。
 export const START_KEY = " ";
 
 export function createInitialState(): GameState {
@@ -41,13 +62,18 @@ export function createInitialState(): GameState {
 // questions[index] の問題で playing に入る TransitionResult を作る。
 // countdown 完了時（questions[0] から開始）と advance 時（questions[nextIndex] へ進む）が
 // 同じ構築ロジックを必要とするための共通ヘルパー。
-function enterQuestion(questions: readonly Question[], index: number): TransitionResult {
+function enterQuestion(
+  questions: readonly Question[],
+  index: number,
+  stats: PlayingStats,
+): TransitionResult {
   return {
     state: {
       phase: "playing",
       questionIndex: index,
       typingState: createTypingState(questions[index].kana),
       cleared: false,
+      stats,
     },
     effects: [{ type: "playSound", sound: "ready" }],
   };
@@ -90,8 +116,12 @@ export function transition(
       if (state.count > 1) {
         return tickCountdown((state.count - 1) as CountdownValue);
       }
-      // 1 の次はゲーム開始。最初の問題の TypingState を作る。
-      return enterQuestion(questions, 0);
+      // 1 の次はゲーム開始。ここが計測開始点で、startedAt を焼き込む。
+      return enterQuestion(questions, 0, {
+        correctKeys: 0,
+        wrongKeys: 0,
+        startedAt: event.now,
+      });
     }
 
     case "playing": {
@@ -100,28 +130,39 @@ export function transition(
         if (!state.cleared) return { state, effects: [] };
         const nextIndex = state.questionIndex + 1;
         if (nextIndex >= questions.length) {
-          return { state: { phase: "done" }, effects: [] };
+          // 最終問題クリア → done。endedAt は最後の advance の now を採用する。
+          return {
+            state: { phase: "done", stats: state.stats, endedAt: event.now },
+            effects: [],
+          };
         }
-        return enterQuestion(questions, nextIndex);
+        return enterQuestion(questions, nextIndex, state.stats);
       }
 
       if (event.type !== "key") return { state, effects: [] };
-      // クリア演出中は打鍵を握り潰す。
+      // クリア演出中は打鍵を握り潰す。cleared 中の打鍵は統計にも含めない。
       if (state.cleared) return { state, effects: [] };
 
       const result = typeKey(state.typingState, event.key);
       if (!result.correct) {
-        return { state, effects: [{ type: "playSound", sound: "error" }] };
+        return {
+          state: { ...state, stats: { ...state.stats, wrongKeys: state.stats.wrongKeys + 1 } },
+          effects: [{ type: "playSound", sound: "error" }],
+        };
       }
+      const nextStats: PlayingStats = {
+        ...state.stats,
+        correctKeys: state.stats.correctKeys + 1,
+      };
       if (!isFinished(result.state)) {
         return {
-          state: { ...state, typingState: result.state },
+          state: { ...state, typingState: result.state, stats: nextStats },
           effects: [{ type: "playSound", sound: "page" }],
         };
       }
       // ここで questionIndex を進めず、演出を挟むために cleared だけ立てる。
       return {
-        state: { ...state, typingState: result.state, cleared: true },
+        state: { ...state, typingState: result.state, cleared: true, stats: nextStats },
         effects: [
           { type: "playSound", sound: "page" },
           { type: "playSound", sound: "success" },
@@ -130,7 +171,16 @@ export function transition(
       };
     }
 
-    case "done":
+    case "done": {
+      // 結果画面からの「もういちど」で idle に戻る。ボタン経由の restart と
+      // キーボードからの START_KEY（idle と対称的に Space で再開）を同一に扱う。
+      if (event.type === "restart") {
+        return { state: createInitialState(), effects: [] };
+      }
+      if (event.type === "key" && event.key === START_KEY) {
+        return { state: createInitialState(), effects: [] };
+      }
       return { state, effects: [] };
+    }
   }
 }

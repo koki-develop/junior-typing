@@ -1,11 +1,13 @@
 import { useEffect, useRef } from "react";
-import type { GameEvent } from "../../domain/game/machine.ts";
 import { START_KEY } from "../../domain/game/machine.ts";
+
+// 打鍵を GameEvent の key バリアントに変換して送るコールバック。now は useTypingGame 側で焼き込む。
+export type KeyboardSend = (event: { type: "key"; key: string }) => void;
 
 // window の keydown を GameEvent に変換して send に渡す。
 // リスナーはマウント時に一度だけ登録する。send はレンダーのたびに新しい参照になり得るため、
 // 依存配列を空にしたまま常に最新の send を呼べるよう ref 経由で保持する。
-export function useKeyboard(send: (event: GameEvent) => void): void {
+export function useKeyboard(send: KeyboardSend): void {
   const sendRef = useRef(send);
   useEffect(() => {
     sendRef.current = send;
