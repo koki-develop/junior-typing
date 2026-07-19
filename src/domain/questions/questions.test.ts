@@ -1,18 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { buildPatterns } from "../romaji/patterns.ts";
-import { questions } from "./questions.ts";
+import { questionSets } from "./questions.ts";
 
 // 出題データの不正を CI で落とすため、追加・変更のたびにここで機械的に検証する。
 // kana: "" は buildPatterns が空配列を返して素通りしてしまい、
 // isFinished が最初から true になってゲームが進行不能になるため、
 // 「throw しない」ではなく「1モーラ以上を生成する」まで検証する。
-describe("questions", () => {
-  it("問題が1問以上ある", () => {
+describe("questionSets", () => {
+  it("セットが1つ以上ある", () => {
+    expect(questionSets.length).toBeGreaterThan(0);
+  });
+
+  it.each(questionSets)("$title の id は空でない", ({ id }) => {
+    expect(id).not.toBe("");
+  });
+
+  it("id はセット全体で一意である", () => {
+    const ids = questionSets.map((set) => set.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it.each(questionSets)("$title に問題が1問以上ある", ({ questions }) => {
     expect(questions.length).toBeGreaterThan(0);
   });
 
-  it.each(questions)(
-    "$text の kana ($kana) は buildPatterns で1モーラ以上を生成する",
+  // it.each は Question 配列をフラット化する用途に使えないので、全セットを平坦に並べ直してから走査する。
+  const allQuestions = questionSets.flatMap((set) =>
+    set.questions.map((question) => ({ setId: set.id, ...question })),
+  );
+
+  it.each(allQuestions)(
+    "[$setId] $text の kana ($kana) は buildPatterns で1モーラ以上を生成する",
     ({ kana }) => {
       expect(buildPatterns(kana).length).toBeGreaterThan(0);
     },

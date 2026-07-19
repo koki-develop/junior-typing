@@ -1,10 +1,20 @@
-import { questions } from "../domain/questions/questions.ts";
+import { useParams } from "@tanstack/react-router";
+import { findQuestionSet } from "../domain/questions/questions.ts";
 import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
 
-export function HomePage() {
-  const { view, restart } = useTypingGame(questions);
+// /play/$setId のプレイ画面。setId → QuestionSet の解決は router.ts の beforeLoad で済んでおり、
+// 存在しない setId は / に redirect されているため、ここに来る時点で findQuestionSet は必ず解決する。
+export function PlayPage() {
+  const { setId } = useParams({ from: "/play/$setId" });
+  const questionSet = findQuestionSet(setId);
+  if (!questionSet) {
+    // beforeLoad のガードを潜り抜けたら開発時のバグ。null で描画を止め、テスト/ビルドを壊す。
+    throw new Error(`unreachable: questionSet not found for setId=${setId}`);
+  }
+
+  const { view, restart } = useTypingGame(questionSet.questions);
 
   return (
     // grid-cols を明示しないと暗黙の列が子（Keyboard の 800px 幅）の max-content に合わせて広がり、
