@@ -18,29 +18,36 @@ export function TopPage() {
   return (
     <div className="min-h-screen bg-canvas font-round text-ink">
       <header className="border-b border-faint">
-        <div className="mx-auto flex max-w-[1140px] items-center justify-between px-8 py-[22px]">
-          <div className="flex items-center gap-3.5">
-            <div
-              aria-hidden="true"
-              className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-accent"
-            >
-              <span className="text-2xl font-extrabold text-canvas">あ</span>
-            </div>
-            <h1 className="m-0 text-[22px] font-medium">ジュニアタイピング</h1>
+        <div className="mx-auto flex max-w-[1140px] items-center gap-5 px-8 pt-8 pb-7">
+          <div
+            aria-hidden="true"
+            className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-[18px] bg-accent shadow-[0_8px_20px_-10px_rgba(240,82,58,0.5)]"
+          >
+            <span className="text-[30px] font-extrabold leading-none text-canvas">あ</span>
+          </div>
+          <div className="min-w-0">
+            <h1 className="m-0 text-[28px] font-bold leading-none tracking-tight">
+              ジュニアタイピング
+            </h1>
+            <p className="mt-2.5 text-[13px] text-muted">
+              タイピングの きほんを、ゆびで まなぼう。
+            </p>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1140px] px-8 pt-11 pb-20">
+      <main className="mx-auto max-w-[1140px] px-8 pt-12 pb-24">
         {groups.map(({ category, sets }) => (
-          <section key={category.id} className="mb-11 last:mb-0">
-            <div className="mb-[18px] flex items-center gap-3">
+          <section key={category.id} className="mb-12 last:mb-0">
+            <div className="mb-5 flex items-center gap-3">
               <span
                 aria-hidden="true"
-                className="inline-block h-[26px] w-[26px] rounded-[9px]"
+                className="inline-block h-[18px] w-[18px] rounded-[6px]"
                 style={{ background: category.color }}
               />
-              <h2 className="m-0 text-[22px] font-medium">{category.label}</h2>
+              <h2 className="m-0 text-[22px] font-bold leading-none tracking-tight">
+                {category.label}
+              </h2>
             </div>
             <ul className="grid grid-cols-3 gap-5">
               {sets.map((set) => (
@@ -63,10 +70,10 @@ function QuestionSetCard({ set }: { set: QuestionSet }) {
     <Link
       to="/play/$setId"
       params={{ setId: set.id }}
-      className="block min-h-[104px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      className="block min-h-[108px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent hover:shadow-[0_12px_28px_-16px_rgba(35,32,28,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
-      <div className="text-[19px] leading-tight">{set.title}</div>
-      <div className="mt-2 truncate text-[13px] font-bold text-muted">{previewWords(set)}</div>
+      <div className="text-[19px] font-bold leading-tight tracking-tight">{set.title}</div>
+      <div className="mt-2 truncate text-[13px] text-muted">{previewWords(set)}</div>
     </Link>
   );
 }
