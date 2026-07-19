@@ -1,4 +1,4 @@
-import { useParams } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { findQuestionSet } from "../domain/questions/questions.ts";
 import { selectQuestions } from "../domain/questions/select.ts";
@@ -43,15 +43,29 @@ export function PlayPage() {
   }, [view.phase, questionSet]);
 
   return (
-    // grid-cols を明示しないと暗黙の列が子（Keyboard の 800px 幅）の max-content に合わせて広がり、
-    // 画面幅より狭いビューポートでページ全体が横スクロールしてしまう。minmax(0,1fr) で列幅を
-    // 利用可能スペースに固定し、Keyboard 側の縮小スケーリングが機能する余地を作る。
-    <main className="grid min-h-screen grid-cols-[minmax(0,1fr)] place-items-center bg-canvas px-6 py-16 font-round text-ink">
-      {view.phase === "done" ? (
-        <ResultScreen result={view.result} onRestart={restart} />
-      ) : (
-        <TypingScreen view={view} />
-      )}
-    </main>
+    // header 行 + main 行の 2 段。main 側は残り高さいっぱいを取り、その中で place-items-center
+    // することで、header の高さぶん重心が少し下がるだけで従来どおり中央にゲーム内容を置ける。
+    // header はプレイ中・結果画面のどちらでも同じ位置に描かれるので、戻る導線が常時同じ場所にある。
+    <div className="grid min-h-screen grid-rows-[auto_1fr] bg-canvas font-round text-ink">
+      <header className="px-6 pt-6">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-lg text-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          <span aria-hidden="true">←</span>
+          <span>もどる</span>
+        </Link>
+      </header>
+      {/* grid-cols を明示しないと暗黙の列が子（Keyboard の 800px 幅）の max-content に合わせて広がり、
+          画面幅より狭いビューポートでページ全体が横スクロールしてしまう。minmax(0,1fr) で列幅を
+          利用可能スペースに固定し、Keyboard 側の縮小スケーリングが機能する余地を作る。 */}
+      <main className="grid grid-cols-[minmax(0,1fr)] place-items-center px-6 pb-16">
+        {view.phase === "done" ? (
+          <ResultScreen result={view.result} onRestart={restart} />
+        ) : (
+          <TypingScreen view={view} />
+        )}
+      </main>
+    </div>
   );
 }
