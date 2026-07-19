@@ -1,49 +1,72 @@
 import { Link } from "@tanstack/react-router";
+import { CATEGORIES } from "../domain/questions/categories.ts";
+import { previewWords } from "../domain/questions/preview.ts";
 import { questionSets } from "../domain/questions/questions.ts";
+import type { QuestionSet } from "../domain/questions/types.ts";
 
-// トップページ。ゲームタイトルと問題セット選択リストを縦に並べる。
-// 現時点ではセットは 1 つだけだが、UI としては「複数セットを並べる」前提の構造で作っておき、
-// 将来 questionSets に追加されたセットが自然にカードとして増えるようにする。
+// トップページ。カテゴリ別に問題セットのカードを並べる「セレクタ」画面。
+// - 並びの権威は CATEGORIES（表示順・色ドットの色）。questionSets の宣言順ではなく、
+//   カテゴリ順に集約してから描画する。所属セットが無いカテゴリは丸ごと非表示。
+// - カード内の要素は「セット名」と「サンプル語プレビュー」のみ。ハイスコアの領域は
+//   まだ機能自体が無いので、下部の区切り線ごと省略している（実装時にこの下に足す想定）。
 export function TopPage() {
+  const groups = CATEGORIES.map((category) => ({
+    category,
+    sets: questionSets.filter((set) => set.category === category.id),
+  })).filter((group) => group.sets.length > 0);
+
   return (
-    <main className="grid min-h-screen grid-cols-[minmax(0,1fr)] place-items-center bg-canvas px-6 py-16 font-round text-ink">
-      <div className="grid w-full max-w-3xl place-items-center gap-16">
-        <h1 className="text-center text-5xl font-medium tracking-tight md:text-6xl">
-          ジュニアタイピング
-        </h1>
+    <div className="min-h-screen bg-canvas font-round text-ink">
+      <header className="border-b border-faint">
+        <div className="mx-auto flex max-w-[1140px] items-center justify-between px-8 py-[22px]">
+          <div className="flex items-center gap-3.5">
+            <div
+              aria-hidden="true"
+              className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-accent"
+            >
+              <span className="text-2xl font-extrabold text-canvas">あ</span>
+            </div>
+            <h1 className="m-0 text-[22px] font-medium">ジュニアタイピング</h1>
+          </div>
+        </div>
+      </header>
 
-        <section
-          aria-labelledby="set-list-heading"
-          className="grid w-full place-items-center gap-6"
-        >
-          <h2 id="set-list-heading" className="text-2xl tracking-[0.2em] text-muted">
-            もんだいをえらんでね
-          </h2>
-
-          {/* セット数が増えても縦に自然に並ぶよう ul で並べる。1 枚のときは中央 1 列で違和感なし。 */}
-          <ul className="grid w-full max-w-xl gap-4">
-            {questionSets.map((set) => (
-              <li key={set.id}>
-                <QuestionSetCard id={set.id} title={set.title} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      </div>
-    </main>
+      <main className="mx-auto max-w-[1140px] px-8 pt-11 pb-20">
+        {groups.map(({ category, sets }) => (
+          <section key={category.id} className="mb-11 last:mb-0">
+            <div className="mb-[18px] flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className="inline-block h-[26px] w-[26px] rounded-[9px]"
+                style={{ background: category.color }}
+              />
+              <h2 className="m-0 text-[22px] font-medium">{category.label}</h2>
+            </div>
+            <ul className="grid grid-cols-3 gap-5">
+              {sets.map((set) => (
+                <li key={set.id}>
+                  <QuestionSetCard set={set} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </main>
+    </div>
   );
 }
 
-// セットカード。カード全体を Link にすることでクリック可能領域を広げ、
-// キーボード操作でも Tab → Enter で入れるようにする（focus-visible のリングも Link に載る）。
-function QuestionSetCard({ id, title }: { id: string; title: string }) {
+// セットカード。カード全体が唯一のクリック対象。ホバーは枠色 + 淡い影のみで、
+// アニメーション（transition/transform）は載せない（デザインの明示要件）。
+function QuestionSetCard({ set }: { set: QuestionSet }) {
   return (
     <Link
       to="/play/$setId"
-      params={{ setId: id }}
-      className="block rounded-3xl border-2 border-faint bg-canvas px-8 py-6 text-center text-3xl font-medium text-ink transition hover:border-accent hover:bg-faint/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+      params={{ setId: set.id }}
+      className="block min-h-[104px] rounded-[18px] border border-faint bg-canvas p-[22px] hover:border-accent hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
-      {title}
+      <div className="text-[19px] leading-tight">{set.title}</div>
+      <div className="mt-2 truncate text-[13px] font-bold text-muted">{previewWords(set)}</div>
     </Link>
   );
 }
