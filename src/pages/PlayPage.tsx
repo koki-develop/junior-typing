@@ -1,4 +1,5 @@
 import { Link, useParams } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { findQuestionSet } from "../domain/questions/questions.ts";
 import { selectQuestions } from "../domain/questions/select.ts";
@@ -6,6 +7,10 @@ import type { Question } from "../domain/questions/types.ts";
 import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
+
+// done ↔ プレイ中の切り替え時のフェード時間。フェードアウト → フェードインの合計時間は
+// この定数の2倍（AnimatePresence の mode="wait" で直列に走るため）。
+const FADE_DURATION_SEC = 0.25;
 
 // /play/$setId のプレイ画面。setId → QuestionSet の解決は router.ts の beforeLoad で済んでおり、
 // 存在しない setId は / に redirect されているため、ここに来る時点で findQuestionSet は必ず解決する。
@@ -60,11 +65,29 @@ export function PlayPage() {
           画面幅より狭いビューポートでページ全体が横スクロールしてしまう。minmax(0,1fr) で列幅を
           利用可能スペースに固定し、Keyboard 側の縮小スケーリングが機能する余地を作る。 */}
       <main className="grid grid-cols-[minmax(0,1fr)] place-items-center px-6 pb-16">
-        {view.phase === "done" ? (
-          <ResultScreen result={view.result} onRestart={restart} />
-        ) : (
-          <TypingScreen view={view} />
-        )}
+        {/* done ↔ プレイ中の切り替え時にフェードアウト → フェードインで切り替える。
+            mode="wait" で先に古い方が消え切ってから新しい方を出すことで、両画面が重なる瞬間を作らない。
+            initial={false} は初回マウント（idle）でフェードインを走らせないための指定で、
+            初回描画は既存挙動どおり即時に出す。ヘッダの「もどる」リンクはこの main の外側に
+            あるので、フェード中も常に同じ位置に表示され続ける。
+            key は "typing"（idle / countdown / playing）と "result"（done）の2値だけにしてあり、
+            プレイ中のフェーズ切り替え（idle→countdown→playing）は AnimatePresence を跨がないので
+            TypingScreen の内側の従来どおり瞬時に切り替わる。 */}
+        <AnimatePresence initial={false} mode="wait">
+          <motion.div
+            key={view.phase === "done" ? "result" : "typing"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: FADE_DURATION_SEC, ease: "easeInOut" }}
+          >
+            {view.phase === "done" ? (
+              <ResultScreen result={view.result} onRestart={restart} />
+            ) : (
+              <TypingScreen view={view} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   );
