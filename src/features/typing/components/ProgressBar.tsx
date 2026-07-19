@@ -13,8 +13,8 @@ type Props = {
 };
 
 // 出題数と同数のセグメントを横に並べた進捗バー。
-// current セグメントは内部を空色のまま外周のグローだけで「ここに居る」を示し、
-// クリア演出中は内部の accent を scaleX(0→1) で左から右へ塗り上げる。
+// アクティブセグメントは色の階調（faint → accent/60 → accent）で位置付けを示し、
+// さらに「上に浮く▼マーカー」と「pill のパルス」を重ねて生きている感を出す。
 export function ProgressBar({ total, currentIndex, filling = false }: Props) {
   const value = currentIndex === null ? 0 : Math.min(currentIndex, total);
   return (
@@ -42,30 +42,63 @@ function segmentState(i: number, currentIndex: number | null, filling: boolean):
   return "remaining";
 }
 
-// current / filling は「アクティブなセグメント」の見た目を共有する。
-// halo を持たず、内部の色だけで「remaining（faint）→ current（accent/60）→ done（accent）」の
-// 3 段階の階調を作る。中間色ソリッドが並ぶことで「進行中」が色の位置関係だけで伝わり、
-// 本体色と halo 色が近くて境界が消える問題を根本から回避する。
-// filling のときはこの器の中に不透明な accent の子要素を重ねて scaleX(0→1) を走らせる。
-// 完了時点で本体色 = accent（=子要素）に揃い、そのまま次レンダーで done へ滑らかに接続する。
-const ACTIVE_SHELL_CLASS = "h-1.5 w-12 rounded-full bg-accent/60";
+// remaining / done は装飾なしの単色 pill。1 つの span で表現する。
+function StaticSegment({ tone }: { tone: "faint" | "accent" }) {
+  const className =
+    tone === "faint" ? "h-1.5 w-12 rounded-full bg-faint" : "h-1.5 w-12 rounded-full bg-accent";
+  return <span className={className} />;
+}
 
-function ProgressSegment({ state }: { state: SegmentState }) {
-  if (state === "remaining") return <span className="h-1.5 w-12 rounded-full bg-faint" />;
-  if (state === "done") return <span className="h-1.5 w-12 rounded-full bg-accent" />;
-  if (state === "current") {
-    return <span className={ACTIVE_SHELL_CLASS} aria-current="step" />;
-  }
-  // filling: 器は current と同じ見た目のまま、内側に accent の帯を左→右で伸ばす。
-  // - overflow-hidden + rounded-full の親でクリップさせるので、子は角丸を持たない
-  // - animation-duration は CLEAR_DELAY_MS と完全同期。両者が別々に動かないよう
-  //   inline style で焼き込み、CSS 側の @theme デフォルト値は上書きされる
+// current / filling は「アクティブなセグメント」の見た目を共有する。
+// 色は remaining（faint）→ current（accent/60）→ done（accent）の 3 段階で階調を作り、
+// halo に頼らず位置関係だけで進行度を伝える。その上で以下 2 つの装飾を重ねる:
+//   1) pill の▼マーカー: 上にはみ出るので relative ラッパを 1 段挟んで overflow を許容
+//   2) 常時パルス（opacity 1↔0.72）: 「生きている＝アクティブ」の合図
+// filling 中はパルスを外し、代わりに内側で accent 子要素が scaleX(0→1) で塗り上げる。
+// 完了時点で本体色 = accent（=子要素）に揃い、次レンダーで done へ滑らかに接続する。
+function ActiveSegment({ filling }: { filling: boolean }) {
   return (
-    <span className={`${ACTIVE_SHELL_CLASS} relative overflow-hidden`} aria-current="step">
+    // ラッパは pill と同じ h/w を持ち、内側は absolute inset-0 で pill を配置する。
+    // pill 側に overflow-hidden を掛けても、マーカーはこのラッパ直下にあるので上へ抜けられる。
+    <span className="relative h-1.5 w-12" aria-current="step">
       <span
-        className="absolute inset-0 origin-left bg-accent animate-progress-fill"
-        style={{ animationDuration: `${CLEAR_DELAY_MS}ms` }}
-      />
+        className={
+          filling
+            ? "absolute inset-0 overflow-hidden rounded-full bg-accent/60"
+            : "absolute inset-0 rounded-full bg-accent/60 animate-progress-pulse"
+        }
+      >
+        {filling && (
+          // - overflow-hidden + rounded-full の親でクリップさせるので、子は角丸を持たない
+          // - animation-duration は CLEAR_DELAY_MS と完全同期。両者が別々に動かないよう
+          //   inline style で焼き込み、CSS 側の @theme デフォルト値は上書きされる
+          <span
+            className="absolute inset-0 origin-left bg-accent animate-progress-fill"
+            style={{ animationDuration: `${CLEAR_DELAY_MS}ms` }}
+          />
+        )}
+      </span>
+      <ActiveMarker />
     </span>
   );
+}
+
+// pill のちょうど真上、3px 浮かせて置く▼マーカー。「ここに居る」を色や動きに頼らず形で示す。
+// SVG にしておくと currentColor（fill-accent）で色を palette と結び付けられる。
+function ActiveMarker() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 8 5"
+      className="pointer-events-none absolute bottom-full left-1/2 h-[5px] w-2 -translate-x-1/2 -translate-y-[3px] fill-accent"
+    >
+      <polygon points="0,0 8,0 4,5" />
+    </svg>
+  );
+}
+
+function ProgressSegment({ state }: { state: SegmentState }) {
+  if (state === "remaining") return <StaticSegment tone="faint" />;
+  if (state === "done") return <StaticSegment tone="accent" />;
+  return <ActiveSegment filling={state === "filling"} />;
 }
