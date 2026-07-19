@@ -1,4 +1,5 @@
-import { animate, motion, useMotionValue, useTransform } from "motion/react";
+import { animate, useMotionValue, useTransform } from "motion/react";
+import * as m from "motion/react-m";
 import { useEffect } from "react";
 import { type GameResult, isPerfectScore } from "../../../domain/game/score.ts";
 import type { HighScoreInfo } from "../../../services/highScores.ts";
@@ -71,7 +72,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
         {/* aria-label は最終値の固定文字列。カウントアップ中の途中値を読み上げさせない。
             opacity 0 でスタートさせて「開始時に 0 が大きく表示される」印象を避け、
             カウントアップ開始と同時に一瞬でフェードインさせる。 */}
-        <motion.p
+        <m.p
           aria-label={`スコア ${result.score}`}
           className="font-mono text-7xl font-medium leading-none tracking-tight tabular-nums text-accent md:text-8xl"
           initial={{ opacity: 0 }}
@@ -83,7 +84,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
           }}
         >
           <AnimatedScoreValue target={result.score} />
-        </motion.p>
+        </m.p>
       </div>
 
       <dl className="grid grid-cols-[auto_auto] gap-x-8 gap-y-3 text-xl md:text-2xl">
@@ -125,7 +126,7 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
 function HighScoreBadge({ perfect }: { perfect: boolean }) {
   const label = perfect ? "パーフェクト！" : "ハイスコア！";
   return (
-    <motion.p
+    <m.p
       role="status"
       className="font-round text-2xl font-bold text-accent md:text-3xl"
       initial={{ scale: 0.6, opacity: 0 }}
@@ -138,7 +139,7 @@ function HighScoreBadge({ perfect }: { perfect: boolean }) {
       }}
     >
       {label}
-    </motion.p>
+    </m.p>
   );
 }
 
@@ -153,7 +154,7 @@ function HighScoreBadge({ perfect }: { perfect: boolean }) {
 // 混在させると、playwright の text マッチが親テキスト "ハイスコアN" とぶつかる。
 function PreviousHighRow({ value }: { value: number }) {
   return (
-    <motion.p
+    <m.p
       className="text-lg md:text-xl"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -165,7 +166,7 @@ function PreviousHighRow({ value }: { value: number }) {
     >
       <span className="text-muted">ハイスコア</span>
       <span className="ml-2 font-mono font-medium tabular-nums text-ink">{value}</span>
-    </motion.p>
+    </m.p>
   );
 }
 
@@ -198,7 +199,7 @@ function StatRow({
   return (
     <>
       <dt className="justify-self-start text-muted">{label}</dt>
-      <motion.dd
+      <m.dd
         className="relative justify-self-end font-mono font-medium tabular-nums text-ink"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -208,7 +209,7 @@ function StatRow({
         {unit !== undefined && (
           <span className="absolute top-0 left-full ml-1 whitespace-nowrap">{unit}</span>
         )}
-      </motion.dd>
+      </m.dd>
     </>
   );
 }
@@ -231,7 +232,7 @@ function AnimatedScoreValue({ target }: { target: number }) {
     });
     return () => controls.stop();
   }, [count, target]);
-  return <motion.span>{rounded}</motion.span>;
+  return <m.span>{rounded}</m.span>;
 }
 
 // 経過時間 ms を「小数第一位までの秒」に整形する。切り捨てで表示（切り上げると 9.98 → 10.0 の
