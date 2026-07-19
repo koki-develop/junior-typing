@@ -24,3 +24,12 @@ export async function advanceTimers(ms: number): Promise<void> {
     vi.advanceTimersByTime(ms);
   });
 }
+
+// pressKey/advanceTimers に当てはまらない、任意の state 更新を伴う非同期処理
+// （例: router.navigate()）を act で包んで同期的に確定させるための汎用ヘルパー。
+export async function runInAct(fn: () => void | Promise<void>): Promise<void> {
+  markActEnvironment();
+  await act(async () => {
+    await fn();
+  });
+}

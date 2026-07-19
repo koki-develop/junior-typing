@@ -24,6 +24,20 @@ describe("questionSets", () => {
     expect(questions.length).toBeGreaterThan(0);
   });
 
+  it.each(questionSets)("$title の category は空でない", ({ category }) => {
+    expect(category).not.toBe("");
+  });
+
+  // questionCount は selectQuestions がプールから無作為抽出する件数の契約。
+  // questions.length を超えると抽出しきれないデータ不正になるため、ここで CI が落とす。
+  it.each(questionSets)(
+    "$title の questionCount は1以上 questions.length 以下である",
+    ({ questionCount, questions }) => {
+      expect(questionCount).toBeGreaterThan(0);
+      expect(questionCount).toBeLessThanOrEqual(questions.length);
+    },
+  );
+
   // it.each は Question 配列をフラット化する用途に使えないので、全セットを平坦に並べ直してから走査する。
   const allQuestions = questionSets.flatMap((set) =>
     set.questions.map((question) => ({ setId: set.id, ...question })),

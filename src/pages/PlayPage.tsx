@@ -1,5 +1,8 @@
 import { useParams } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
 import { findQuestionSet } from "../domain/questions/questions.ts";
+import { selectQuestions } from "../domain/questions/select.ts";
+import type { Question } from "../domain/questions/types.ts";
 import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
@@ -14,7 +17,30 @@ export function PlayPage() {
     throw new Error(`unreachable: questionSet not found for setId=${setId}`);
   }
 
-  const { view, restart } = useTypingGame(questionSet.questions);
+  // questionSet.questions は出題プール。実際にプレイするのは questionCount 件のランダム抽出
+  // （順序も含めてシャッフル済み）で、初回マウント時に一度だけ選ぶ。questionSet は
+  // questionSets 内の同一要素への参照なので setId が同じ限り安定している
+  // （router.ts の playRoute に remountDeps: ({ params }) => params を設定しているため、
+  // setId が変わるとこのコンポーネント自体が丸ごとマウントし直され、questionSet がこの
+  // コンポーネントの生存期間中に変わることはない）。
+  const [activeQuestions, setActiveQuestions] = useState<Question[]>(() =>
+    selectQuestions(questionSet.questions, questionSet.questionCount),
+  );
+  const { view, restart } = useTypingGame(activeQuestions);
+
+  // done → idle への遷移（「もういちど」ボタン・done 中の Space キーのいずれの経路でも
+  // view.phase は "idle" になる）でだけ出題を引き直す。前回描画時の phase を
+  // previousPhaseRef に持つことで「直前が idle 以外だった」ときだけ発火させ、初回マウント
+  // （初期状態から既に idle）で useState の初期抽選をもう一度やり直す無駄を避ける。
+  // 依存配列を [view.phase, questionSet] に絞ることで、"playing" 中の再レンダー（phase
+  // 自体は変わらない）のたびに ref 書き込みだけの空振り実行が走るのも防ぐ。
+  const previousPhaseRef = useRef(view.phase);
+  useEffect(() => {
+    if (view.phase === "idle" && previousPhaseRef.current !== "idle") {
+      setActiveQuestions(selectQuestions(questionSet.questions, questionSet.questionCount));
+    }
+    previousPhaseRef.current = view.phase;
+  }, [view.phase, questionSet]);
 
   return (
     // grid-cols を明示しないと暗黙の列が子（Keyboard の 800px 幅）の max-content に合わせて広がり、

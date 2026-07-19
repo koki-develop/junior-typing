@@ -22,6 +22,14 @@ const topRoute = createRoute({
 // /play/$setId は URL 直打ちで存在しない setId が渡る可能性があるため、
 // beforeLoad で findQuestionSet に解決し、失敗したら / にリダイレクトして寡黙に握り潰す。
 // 専用の NotFound 画面は今回はスコープ外（後日追加予定）。
+//
+// remountDeps: ({ params }) => params で、setId が変わるたびに PlayPage を完全に
+// マウントし直す（TanStack Router がこれを React の key 変更として扱う）。現状 setId を
+// マウントしたまま切り替える導線（別セットへのリンク等）は無いが、将来そういう導線が
+// 追加されても PlayPage 内の activeQuestions や useTypingGame の GameState が
+// 前のセットのデータを引きずったまま残るクラスのバグが構造的に起こらないようにするための
+// ルーティング層での対策。ページ側で setId ごとに手動リセットするより、ここで「setId が
+// 変わったら別ページとして扱う」と宣言する方が正しい置き所。
 const playRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/play/$setId",
@@ -30,6 +38,7 @@ const playRoute = createRoute({
       throw redirect({ to: "/" });
     }
   },
+  remountDeps: ({ params }) => params,
   component: PlayPage,
 });
 
