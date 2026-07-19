@@ -8,12 +8,14 @@ import { QuestionDisplay } from "./QuestionDisplay.tsx";
 type Props = {
   // done は呼び出し側（App）で分岐済みなので、ここでは扱わない。
   view: Exclude<GameView, { phase: "done" }>;
+  // idle 中の IdleMessage に表示する QuestionSet.title。
+  title: string;
 };
 
 // 進捗 → 中央 → 鍵盤ヒントの 3 段を縦に並べるゲーム画面のシェル。
 // 中央スロットだけ idle / countdown / playing で差し替えることで、
 // フェーズ遷移中に周囲のレイアウトが跳ねないようにする。
-export function TypingScreen({ view }: Props) {
+export function TypingScreen({ view, title }: Props) {
   const currentIndex = view.phase === "playing" ? view.questionIndex : 0;
   const activeKey =
     view.phase === "playing" ? view.next || null : view.phase === "idle" ? "space" : null;
@@ -30,16 +32,16 @@ export function TypingScreen({ view }: Props) {
       <span aria-atomic="true" aria-live="assertive" className="sr-only">
         {view.phase === "countdown" ? view.count : ""}
       </span>
-      <PlayfieldCenter view={view} />
+      <PlayfieldCenter view={view} title={title} />
       <Keyboard activeKey={activeKey} />
     </div>
   );
 }
 
-function PlayfieldCenter({ view }: Props) {
+function PlayfieldCenter({ view, title }: Props) {
   switch (view.phase) {
     case "idle":
-      return <IdleMessage />;
+      return <IdleMessage title={title} />;
     case "countdown":
       return <CountdownMessage count={view.count} />;
     case "playing":

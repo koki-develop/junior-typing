@@ -23,14 +23,14 @@ function getHighlightedKeyCaps(container: HTMLElement) {
 
 test("idle: 進捗 0 / Space キーの KeyCap 強調 / IdleMessage / live 領域は空", async () => {
   const view = { phase: "idle", total: 5 } satisfies GameView;
-  const screen = await render(<TypingScreen view={view} />);
+  const screen = await render(<TypingScreen view={view} title="どうぶつ" />);
 
   const bar = screen.getByRole("progressbar", { name: "タイピング進捗" });
   await expect.element(bar).toHaveAttribute("aria-valuenow", "0");
 
   expect(getHighlightedKeyCaps(screen.container)).toHaveLength(1);
 
-  await expect.element(screen.getByText("スタート")).toBeVisible();
+  await expect.element(screen.getByText("どうぶつ")).toBeVisible();
 
   const live = getLiveRegion(screen.container);
   expect(live).not.toBeNull();
@@ -39,7 +39,7 @@ test("idle: 進捗 0 / Space キーの KeyCap 強調 / IdleMessage / live 領域
 
 test("countdown: live 領域が count を文字列として反映し、CountdownMessage を表示する", async () => {
   const view = { phase: "countdown", total: 5, count: 3 } satisfies GameView;
-  const screen = await render(<TypingScreen view={view} />);
+  const screen = await render(<TypingScreen view={view} title="どうぶつ" />);
 
   const live = getLiveRegion(screen.container);
   expect(live?.textContent).toBe("3");
@@ -60,7 +60,7 @@ test("playing: 進捗が questionIndex に追従し、QuestionDisplay と次キ�
     rest: "i",
     cleared: false,
   } satisfies GameView;
-  const screen = await render(<TypingScreen view={view} />);
+  const screen = await render(<TypingScreen view={view} title="どうぶつ" />);
 
   const bar = screen.getByRole("progressbar", { name: "タイピング進捗" });
   await expect.element(bar).toHaveAttribute("aria-valuenow", "2");
@@ -83,7 +83,7 @@ test("playing かつ cleared で next が空文字のときは KeyCap を強調�
     rest: "",
     cleared: true,
   } satisfies GameView;
-  const screen = await render(<TypingScreen view={view} />);
+  const screen = await render(<TypingScreen view={view} title="どうぶつ" />);
 
   expect(getHighlightedKeyCaps(screen.container)).toHaveLength(0);
 });

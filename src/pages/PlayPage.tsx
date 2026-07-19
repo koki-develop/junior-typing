@@ -84,7 +84,7 @@ export function PlayPage() {
             {view.phase === "done" ? (
               <ResultScreen result={view.result} onRestart={restart} />
             ) : (
-              <TypingScreen view={view} />
+              <TypingScreen view={view} title={questionSet.title} />
             )}
           </motion.div>
         </AnimatePresence>
