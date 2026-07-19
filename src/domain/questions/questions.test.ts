@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildPatterns } from "../romaji/patterns.ts";
+import { findCategory } from "./categories.ts";
 import { questionSets } from "./questions.ts";
 
 // 出題データの不正を CI で落とすため、追加・変更のたびにここで機械的に検証する。
@@ -24,9 +25,12 @@ describe("questionSets", () => {
     expect(questions.length).toBeGreaterThan(0);
   });
 
-  it.each(questionSets)("$title の category は空でない", ({ category }) => {
-    expect(category).not.toBe("");
-  });
+  it.each(questionSets)(
+    "$title の category は CATEGORIES に存在する id を参照している",
+    ({ category }) => {
+      expect(findCategory(category)).not.toBeUndefined();
+    },
+  );
 
   // questionCount は selectQuestions がプールから無作為抽出する件数の契約。
   // questions.length を超えると抽出しきれないデータ不正になるため、ここで CI が落とす。
