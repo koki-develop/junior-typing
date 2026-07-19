@@ -1,5 +1,6 @@
 import { render } from "vitest-browser-react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+import { StrictMode } from "react";
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 
 // cuelume を叩かず、effect の実行（play 呼び出し）だけを気にせずに全問プレイできるようにする。
@@ -21,6 +22,24 @@ function renderPlayPage() {
     history: createMemoryHistory({ initialEntries: ["/play/land-animals"] }),
   });
   return render(<RouterProvider router={router} />);
+}
+
+// main.tsx が <StrictMode> でラップしているのと同じ環境を再現するための version。
+// Strict Mode 下では function コンポーネントが 2 回 render されるため、render 中に
+// 副作用を持つ recordHighScore を呼ぶと 1 回目の書き込みが 2 回目の判定結果を反転
+// させて "新記録なのにバッジが出ない" 事象が起きていた（PlayPage 側で
+// evaluateHighScore + useEffect の分離に修正済み）。この関数はその回帰を捕まえる
+// ために使う。
+function renderPlayPageStrict() {
+  const router = createRouter({
+    routeTree,
+    history: createMemoryHistory({ initialEntries: ["/play/land-animals"] }),
+  });
+  return render(
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>,
+  );
 }
 
 const animalsSet = findQuestionSet("land-animals");
@@ -134,6 +153,38 @@ test("『もどる』リンクを押すとトップページに戻る", async ()
 
   // TopPage のヘッダ見出し。/play からトップへ確かに遷移したことの目印にする。
   await expect.element(screen.getByRole("heading", { name: "ジュニアタイピング" })).toBeVisible();
+});
+
+test("Strict Mode 下でも初回完走でハイスコア更新バッジが表示される（回帰: recordHighScore を render 中に呼んでいた頃は isNewHigh が反転していた）", async () => {
+  // 本番の main.tsx と同じく <StrictMode> でラップして render すると、コンポーネントの
+  // render 関数は 1 回のパスにつき 2 度実行される。旧実装は recordHighScore を render
+  // 中に呼んでいたため、1 回目の書き込み → 2 回目の読み取りで isNewHigh=false と判定
+  // され、バッジが出ずに PreviousHighRow が出るバグがあった。evaluateHighScore（純関数
+  // 版）で判定して recordHighScore は useEffect に押し出した修正が効いていれば、
+  // Strict Mode でもバッジが可視化される。
+  const screen = await renderPlayPageStrict();
+
+  await pressKey(" ");
+  await advanceTimers(COUNTDOWN_STEP_MS * 3);
+  await playAllQuestions();
+
+  await expect.element(screen.getByRole("status")).toBeVisible();
+});
+
+test("全問プレイ後、初回完走なら結果画面にハイスコア更新バッジ（role=status）が表示される", async () => {
+  // 初回完走は必ず新記録扱い（前回スコアが存在しないため recordHighScore の
+  // isNewHigh が true になる）。バッジの文言は「ハイスコア！」/「パーフェクト！」
+  // の 2 種類あり、fake timers 下では elapsedMs=0 で常に満点になる関係で本テストでは
+  // 「パーフェクト！」が出るが、テストの目的は "更新演出が出ること" の統合検証なので
+  // 文言ではなく role="status" で拾って両方の分岐をまとめてカバーする。
+  // 文言ごとの分岐は ResultScreen.browser.test.tsx で別途担保。
+  const screen = await renderPlayPage();
+
+  await pressKey(" ");
+  await advanceTimers(COUNTDOWN_STEP_MS * 3);
+  await playAllQuestions();
+
+  await expect.element(screen.getByRole("status")).toBeVisible();
 });
 
 test("全問プレイ後、その setId のハイスコアが localStorage に記録される", async () => {

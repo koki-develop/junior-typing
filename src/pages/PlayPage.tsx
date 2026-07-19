@@ -7,7 +7,7 @@ import type { Question } from "../domain/questions/types.ts";
 import { ResultScreen } from "../features/typing/components/ResultScreen.tsx";
 import { TypingScreen } from "../features/typing/components/TypingScreen.tsx";
 import { useTypingGame } from "../features/typing/useTypingGame.ts";
-import { recordHighScore } from "../services/highScores.ts";
+import { evaluateHighScore, type HighScoreInfo, recordHighScore } from "../services/highScores.ts";
 
 // done ↔ プレイ中の切り替え時のフェード時間。フェードアウト → フェードインの合計時間は
 // この定数の2倍（AnimatePresence の mode="wait" で直列に走るため）。
@@ -50,12 +50,39 @@ export function PlayPage() {
     previousPhaseRef.current = view.phase;
   }, [view.phase, questionSet]);
 
-  // done 到達時にハイスコアを記録する。表示は後続セッションで実装するので、ここでは書き込みだけ。
-  // done 中のスコア（number）を切り出して依存に載せることで、
-  // 「非 done → done」の遷移でのみ effect が発火する。done phase 中はスコアが不変なので
-  // 依存値も同一で、同一プレイ中の多重書き込みは起きない。「もういちど」で done → idle に戻ると
-  // doneScore が null に戻り、次に done へ入ったときは新しいスコアで再び発火する。
+  // done 到達時のハイスコア表示に必要な情報（新記録判定 + 前回スコア）を、
+  // ResultScreen の初回描画に間に合う形で保持する。
+  //
+  // 読み取り（判定）と書き込み（永続化）で責務を明確に分ける:
+  //   - render 中の derived state では evaluateHighScore（純関数版）を使い、
+  //     副作用ゼロで highScoreInfo を確定する。ResultScreen が初めて描画される
+  //     tick で既に prop が入っているので、モーションの delay 計算がマウント時刻
+  //     に張り付き、「ハイスコア！」バッジのタイミングがカウントアップ完了と
+  //     きっちり噛み合う（useEffect 経由だと 1 tick 遅れて timing がズレる）。
+  //   - useEffect では recordHighScore を呼んで localStorage に書き込む。
+  //     こちらは commit 後に走るので UI の初期描画には影響しない。
+  //
+  // なぜ render 中で recordHighScore を直接呼ばないのか（過去に踏んだ罠）:
+  //   recordHighScore は「書き込み」と「新記録判定」を同時に行うため、React Strict
+  //   Mode の double-invoke で render が 2 回呼ばれると、1 回目の書き込みが 2 回目の
+  //   判定結果を反転させる（1 回目: isNewHigh=true、2 回目: 既に書き込まれた値と比較
+  //   して isNewHigh=false）。2 回目の setState が commit されて、dev ビルドの初回
+  //   完走で「新記録なのにバッジが出ずに『ハイスコア N』が出る」現象が発生していた。
+  //   evaluateHighScore は副作用が無いので Strict Mode でも判定結果が反転しない。
+  //   useEffect 内の recordHighScore は Strict Mode で 2 回発火するが、書き込み自体
+  //   は冪等（同一 score の再書き込みは値が変わらない）で観測可能な副作用は無い。
+  //
+  // done phase 中はスコアが不変なので lastDoneScore と一致し続け、判定の再計算は
+  // 起きない。「もういちど」で done → idle に戻ると doneScore が null に戻り、
+  // highScoreInfo も null にクリアされる。次に done へ入ったときは新しいスコアで
+  // 判定と書き込みが再度走る。
   const doneScore = view.phase === "done" ? view.result.score : null;
+  const [lastDoneScore, setLastDoneScore] = useState<number | null>(null);
+  const [highScoreInfo, setHighScoreInfo] = useState<HighScoreInfo | null>(null);
+  if (doneScore !== lastDoneScore) {
+    setLastDoneScore(doneScore);
+    setHighScoreInfo(doneScore === null ? null : evaluateHighScore(setId, doneScore));
+  }
   useEffect(() => {
     if (doneScore === null) return;
     recordHighScore(setId, doneScore);
@@ -96,7 +123,11 @@ export function PlayPage() {
             transition={{ duration: FADE_DURATION_SEC, ease: "easeInOut" }}
           >
             {view.phase === "done" ? (
-              <ResultScreen result={view.result} onRestart={restart} />
+              <ResultScreen
+                result={view.result}
+                highScoreInfo={highScoreInfo}
+                onRestart={restart}
+              />
             ) : (
               <TypingScreen view={view} title={questionSet.title} />
             )}

@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_SCORE } from "../domain/game/score.ts";
-import { getAllHighScores, getHighScore, recordHighScore } from "./highScores.ts";
+import {
+  evaluateHighScore,
+  getAllHighScores,
+  getHighScore,
+  recordHighScore,
+} from "./highScores.ts";
 
 const STORAGE_KEY = "junior-typing:high-scores:v1";
 
@@ -214,5 +219,66 @@ describe("recordHighScore", () => {
   it("localStorage が未定義でもクラッシュしない（書き込みは無視される）", () => {
     delete (globalThis as { localStorage?: unknown }).localStorage;
     expect(() => recordHighScore("hiragana-a-ka", 500)).not.toThrow();
+  });
+});
+
+describe("evaluateHighScore", () => {
+  // evaluateHighScore は "副作用なしで判定だけする" API。以下は書き込みが起きないことと、
+  // 判定結果が recordHighScore と一致することを検証する。
+  it("未登録の setId は previousHigh=null / isNewHigh=true を返す", () => {
+    expect(evaluateHighScore("hiragana-a-ka", 500)).toEqual({
+      previousHigh: null,
+      isNewHigh: true,
+    });
+  });
+
+  it("既存より高いスコアは isNewHigh=true と一緒に previousHigh を返す", () => {
+    recordHighScore("hiragana-a-ka", 500);
+    expect(evaluateHighScore("hiragana-a-ka", 800)).toEqual({
+      previousHigh: 500,
+      isNewHigh: true,
+    });
+  });
+
+  it("既存と同点のスコアは isNewHigh=false（recordHighScore と同じルール）", () => {
+    recordHighScore("hiragana-a-ka", 500);
+    expect(evaluateHighScore("hiragana-a-ka", 500)).toEqual({
+      previousHigh: 500,
+      isNewHigh: false,
+    });
+  });
+
+  it("既存より低いスコアは isNewHigh=false", () => {
+    recordHighScore("hiragana-a-ka", 800);
+    expect(evaluateHighScore("hiragana-a-ka", 300)).toEqual({
+      previousHigh: 800,
+      isNewHigh: false,
+    });
+  });
+
+  it("呼び出しても localStorage への書き込みは発生しない", () => {
+    const setItemSpy = vi.spyOn(storage, "setItem");
+    evaluateHighScore("hiragana-a-ka", 500);
+    evaluateHighScore("hiragana-a-ka", 1000);
+    expect(setItemSpy).not.toHaveBeenCalled();
+    // 状態を変えていないので、後続の getHighScore は依然 null。
+    expect(getHighScore("hiragana-a-ka")).toBeNull();
+  });
+
+  it("連続で同じ入力を渡しても判定結果が反転しない（React Strict Mode の double-invoke 想定）", () => {
+    // Strict Mode 下では render 中に evaluateHighScore が同じ (setId, score) で 2 度呼ばれる。
+    // 副作用が無いので 2 回とも同じ結果を返し、isNewHigh が false 化しないことを保証する。
+    const first = evaluateHighScore("hiragana-a-ka", 500);
+    const second = evaluateHighScore("hiragana-a-ka", 500);
+    expect(first).toEqual({ previousHigh: null, isNewHigh: true });
+    expect(second).toEqual({ previousHigh: null, isNewHigh: true });
+  });
+
+  it("localStorage が未定義でもクラッシュせず、未登録として扱う", () => {
+    delete (globalThis as { localStorage?: unknown }).localStorage;
+    expect(evaluateHighScore("hiragana-a-ka", 500)).toEqual({
+      previousHigh: null,
+      isNewHigh: true,
+    });
   });
 });

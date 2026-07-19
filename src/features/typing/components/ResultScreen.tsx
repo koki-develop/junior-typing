@@ -1,6 +1,7 @@
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
 import { useEffect } from "react";
-import type { GameResult } from "../../../domain/game/score.ts";
+import { type GameResult, isPerfectScore } from "../../../domain/game/score.ts";
+import type { HighScoreInfo } from "../../../services/highScores.ts";
 import { playSound } from "../../../services/sound.ts";
 
 // 結果画面の登場アニメーションのタイミング定数。値は 1 か所にまとめて微調整しやすくしておく。
@@ -23,18 +24,49 @@ const SCORE_COUNTUP_EASE = [0.16, 1, 0.3, 1] as const;
 // 開始時に「0」がドンと表示されて誤解を与えるのを避けるため、フェード完了までは半透明にしておく。
 const SCORE_FADE_IN_DURATION_SEC = 0.2;
 
+// ハイスコア関連の演出の登場タイミング。
+// - 更新バッジ: カウントアップ完了と同時（sparkle の瞬間に "決まった" 感を作る）。
+// - 前回ハイスコア行: バッジと違って「参考情報」なので、カウントアップの余韻が一瞬
+//   落ち着いてから静かに fade in する。同時に出すと sparkle の視線集中を奪う。
+const HIGH_SCORE_REVEAL_DELAY_SEC = SCORE_COUNTUP_DELAY_SEC + SCORE_COUNTUP_DURATION_SEC;
+const PREVIOUS_HIGH_REVEAL_EXTRA_DELAY_SEC = 0.25;
+const PREVIOUS_HIGH_FADE_DURATION_SEC = 0.4;
+
 type Props = {
   result: GameResult;
+  // ハイスコアの記録結果。done 到達時に PlayPage 側で recordHighScore を叩いた結果を
+  // そのまま流し込む。null は「まだ done phase に達していない」ケース用の防衛値で、
+  // 実運用上は PlayPage の derived state パターン（changing state during render）が
+  // ResultScreen の初回描画までに必ず値を確定させる。
+  highScoreInfo: HighScoreInfo | null;
   onRestart: () => void;
 };
 
 // 全問クリア後に表示する結果画面。
 // スコアを大きく強調しつつ、小学生向けに漢字を控えたラベルで打鍵数・ミス数・時間を並べる。
 // 「もういちど」ボタンでリスタート。キーボードでは Space でも再開できる（machine.ts の done で処理）。
-export function ResultScreen({ result, onRestart }: Props) {
+//
+// ハイスコア関連の分岐:
+//   - 新記録時（isNewHigh=true）: スコアの上に「ハイスコア！」バッジ。
+//     さらに満点（isPerfectScore）なら文言を「パーフェクト！」に切り替える。
+//     カウントアップ完了と同時に spring で登場して達成感を演出する。
+//   - 未更新時（isNewHigh=false）: stat 群の下に「ハイスコア N」を控えめに表示。
+//     カウントアップの余韻が落ち着いてから静かに fade in する。
+//   - highScoreInfo=null: 両方非表示。derived state が確定する前の防衛値であり、
+//     通常運用では発生しない（PlayPage で render 同期に prop を確定させている）。
+export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
+  const isNewHigh = highScoreInfo?.isNewHigh === true;
+  // isNewHigh=true のときの previousHigh は "前回のハイスコア" だが、参考行として
+  // 出すのは「更新できなかった」ケースだけ。isNewHigh の分岐で明確に切り出す。
+  const previousHighToShow =
+    highScoreInfo !== null && !highScoreInfo.isNewHigh ? highScoreInfo.previousHigh : null;
+  // 「パーフェクト！」への切り替えは「今回のスコアが満点」で判定する。
+  // isNewHigh との組み合わせでのみ意味を持つ（未更新時はバッジ自体が出ない）。
+  const perfect = isPerfectScore(result.score);
   return (
     <div className="grid place-items-center gap-10 text-center">
       <div className="grid place-items-center gap-2">
+        {isNewHigh && <HighScoreBadge perfect={perfect} />}
         <p className="text-lg tracking-[0.28em] text-muted">スコア</p>
         {/* aria-label は最終値の固定文字列。カウントアップ中の途中値を読み上げさせない。
             opacity 0 でスタートさせて「開始時に 0 が大きく表示される」印象を避け、
@@ -65,6 +97,8 @@ export function ResultScreen({ result, onRestart }: Props) {
         />
       </dl>
 
+      {previousHighToShow !== null && <PreviousHighRow value={previousHighToShow} />}
+
       <div className="grid place-items-center gap-3">
         <button
           type="button"
@@ -76,6 +110,62 @@ export function ResultScreen({ result, onRestart }: Props) {
         <span className="text-muted">スペースキーでもう1回</span>
       </div>
     </div>
+  );
+}
+
+// 新記録時にスコアラベルの上に出す「達成」バッジ。
+// perfect=true のときは文言を「パーフェクト！」に切り替える（TopPage のパーフェクト
+// 特別扱いと語彙を揃える）。星や絵文字は使わない（TopPage が絵文字回避で ★ 記号を
+// 使っている一方、ここでは文字装飾を最小にして "文言 + アニメーション + accent 色" の
+// 3 点で達成感を作る方針）。
+// spring で scale 0.6 → 1.0 に飛び込ませる。stiffness/damping は「軽く弾んで止まる」
+// 範囲でチューニング（damping を強くしすぎると "決まった" 感が失われ、弱すぎると
+// うるさい）。カウントアップ完了と同時に登場して、sparkle 音の視覚フィニッシュを兼ねる。
+// role="status" を付けているのは、更新結果を SR ユーザーにも短く伝えるため。
+function HighScoreBadge({ perfect }: { perfect: boolean }) {
+  const label = perfect ? "パーフェクト！" : "ハイスコア！";
+  return (
+    <motion.p
+      role="status"
+      className="font-round text-2xl font-bold text-accent md:text-3xl"
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{
+        delay: HIGH_SCORE_REVEAL_DELAY_SEC,
+        type: "spring",
+        stiffness: 380,
+        damping: 14,
+      }}
+    >
+      {label}
+    </motion.p>
+  );
+}
+
+// 未更新時に stat 群の下に控えめに出す「これまでのハイスコア」表示。
+// トップページのカードと同じ "ハイスコア N" の語彙で揃える（未来の変更で片方だけ
+// 表現が変わると、同じ値なのに違って見える）。数字は tabular-nums で桁揃え。
+// バッジのような登場演出はせず、opacity fade だけで静かに現れる。
+//
+// ラベルと値を別 span に分けているのは、色分け（muted / ink）を独立させたい
+// ことに加えて、テストで「ハイスコア」ラベルと数値をそれぞれ独立の leaf 要素
+// として getByText で拾えるようにするため。同一 p 内でテキストノードとして
+// 混在させると、playwright の text マッチが親テキスト "ハイスコアN" とぶつかる。
+function PreviousHighRow({ value }: { value: number }) {
+  return (
+    <motion.p
+      className="text-lg md:text-xl"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{
+        delay: HIGH_SCORE_REVEAL_DELAY_SEC + PREVIOUS_HIGH_REVEAL_EXTRA_DELAY_SEC,
+        duration: PREVIOUS_HIGH_FADE_DURATION_SEC,
+        ease: "easeOut",
+      }}
+    >
+      <span className="text-muted">ハイスコア</span>
+      <span className="ml-2 font-mono font-medium tabular-nums text-ink">{value}</span>
+    </motion.p>
   );
 }
 
