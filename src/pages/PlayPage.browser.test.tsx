@@ -26,6 +26,7 @@ const animalsSet = findQuestionSet("land-animals");
 if (!animalsSet) throw new Error("test fixture missing: questionSets に 'land-animals' がない");
 const animalsPool = animalsSet.questions;
 const animalsQuestionCount = animalsSet.questionCount;
+const animalsRandomOrder = animalsSet.randomOrder;
 
 // 各モーラの先頭候補（buildPatterns の candidates[0]）だけを打てば必ず正解になる。
 // 「ん」「っ」は次モーラ次第で候補が変わるが、buildPatterns が既にその判定込みで
@@ -58,9 +59,10 @@ afterEach(() => {
 });
 
 // beforeEach で固定した Math.random と同じ状態で呼べば、PlayPage が内部で選ぶ
-// activeQuestions と同じ配列が得られる。
+// activeQuestions と同じ配列が得られる。land-animals は randomOrder=true なので、
+// PlayPage 側と同じフラグを渡してシャッフル経路をなぞる。
 function expectedActiveQuestions() {
-  return selectQuestions(animalsPool, animalsQuestionCount);
+  return selectQuestions(animalsPool, animalsQuestionCount, animalsRandomOrder);
 }
 
 async function playAllQuestions(): Promise<void> {

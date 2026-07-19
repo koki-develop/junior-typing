@@ -24,6 +24,6 @@ Kana is split into moras (拗音 like `きゃ` counts as one unit), and each mor
 ## Adding things
 
 - **New kana** → add its candidates to `MORA_TABLE` in `moraTable.ts`
-- **New question / question set** → `questions.ts`. A set needs a unique URL-safe `id` (it goes into `/play/$setId`), a `category`, and a `questionCount` (≤ the pool size). No routing/UI changes needed — TopPage and the router follow automatically, and the contract checks in `questions.test.ts` apply automatically
+- **New question / question set** → `questions.ts`. A set needs a unique URL-safe `id` (it goes into `/play/$setId`), a `category`, a `questionCount` (≤ the pool size), and a `randomOrder` flag (`true` = shuffle & random-sample on each play; `false` = play the first `questionCount` items in defined order, used for step-by-step learning sets like the hiragana intro). No routing/UI changes needed — TopPage and the router follow automatically, and the contract checks in `questions.test.ts` apply automatically
 - **New sound effect** → add it to `GameSound` in `game/effects.ts` and map it in `SOUND_NAMES` in `services/sound.ts` (a missing mapping is a compile error)
 - **Score formula change** → `game/score.ts`. `score.test.ts` pins expected scores as literal numbers (never as expressions over the same constants), so re-derive them by hand when changing the formula

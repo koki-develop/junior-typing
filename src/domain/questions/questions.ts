@@ -6,6 +6,7 @@ export const questionSets: QuestionSet[] = [
     title: "あいうえお・かきくけこ",
     category: "hiragana",
     questionCount: 10,
+    randomOrder: false,
     questions: [
       { text: "あ", kana: "あ" },
       { text: "い", kana: "い" },
@@ -24,6 +25,7 @@ export const questionSets: QuestionSet[] = [
     title: "さしすせそ・たちつてと",
     category: "hiragana",
     questionCount: 10,
+    randomOrder: false,
     questions: [
       { text: "さ", kana: "さ" },
       { text: "し", kana: "し" },
@@ -42,6 +44,7 @@ export const questionSets: QuestionSet[] = [
     title: "なにぬねの・はひふへほ",
     category: "hiragana",
     questionCount: 10,
+    randomOrder: false,
     questions: [
       { text: "な", kana: "な" },
       { text: "に", kana: "に" },
@@ -60,6 +63,7 @@ export const questionSets: QuestionSet[] = [
     title: "まみむめも・やゆよ",
     category: "hiragana",
     questionCount: 8,
+    randomOrder: false,
     questions: [
       { text: "ま", kana: "ま" },
       { text: "み", kana: "み" },
@@ -76,6 +80,7 @@ export const questionSets: QuestionSet[] = [
     title: "らりるれろ・わをん",
     category: "hiragana",
     questionCount: 8,
+    randomOrder: false,
     questions: [
       { text: "ら", kana: "ら" },
       { text: "り", kana: "り" },
@@ -92,6 +97,7 @@ export const questionSets: QuestionSet[] = [
     title: "がぎぐげご・ざじずぜぞ",
     category: "hiragana",
     questionCount: 10,
+    randomOrder: false,
     questions: [
       { text: "が", kana: "が" },
       { text: "ぎ", kana: "ぎ" },
@@ -110,6 +116,7 @@ export const questionSets: QuestionSet[] = [
     title: "だぢづでど・ばびぶべぼ",
     category: "hiragana",
     questionCount: 10,
+    randomOrder: false,
     questions: [
       { text: "だ", kana: "だ" },
       { text: "ぢ", kana: "ぢ" },
@@ -128,6 +135,7 @@ export const questionSets: QuestionSet[] = [
     title: "ぱぴぷぺぽ",
     category: "hiragana",
     questionCount: 5,
+    randomOrder: false,
     questions: [
       { text: "ぱ", kana: "ぱ" },
       { text: "ぴ", kana: "ぴ" },
@@ -141,6 +149,7 @@ export const questionSets: QuestionSet[] = [
     title: "きゃきゅきょ・しゃしゅしょ・ちゃちゅちょ",
     category: "hiragana",
     questionCount: 9,
+    randomOrder: false,
     questions: [
       { text: "きゃ", kana: "きゃ" },
       { text: "きゅ", kana: "きゅ" },
@@ -158,6 +167,7 @@ export const questionSets: QuestionSet[] = [
     title: "にゃにゅにょ・ひゃひゅひょ",
     category: "hiragana",
     questionCount: 6,
+    randomOrder: false,
     questions: [
       { text: "にゃ", kana: "にゃ" },
       { text: "にゅ", kana: "にゅ" },
@@ -172,6 +182,7 @@ export const questionSets: QuestionSet[] = [
     title: "みゃみゅみょ・りゃりゅりょ",
     category: "hiragana",
     questionCount: 6,
+    randomOrder: false,
     questions: [
       { text: "みゃ", kana: "みゃ" },
       { text: "みゅ", kana: "みゅ" },
@@ -186,6 +197,7 @@ export const questionSets: QuestionSet[] = [
     title: "ぎゃぎゅぎょ・じゃじゅじょ",
     category: "hiragana",
     questionCount: 6,
+    randomOrder: false,
     questions: [
       { text: "ぎゃ", kana: "ぎゃ" },
       { text: "ぎゅ", kana: "ぎゅ" },
@@ -200,6 +212,7 @@ export const questionSets: QuestionSet[] = [
     title: "びゃびゅびょ・ぴゃぴゅぴょ",
     category: "hiragana",
     questionCount: 6,
+    randomOrder: false,
     questions: [
       { text: "びゃ", kana: "びゃ" },
       { text: "びゅ", kana: "びゅ" },
@@ -214,6 +227,7 @@ export const questionSets: QuestionSet[] = [
     title: "どうぶつ",
     category: "animals",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "犬", kana: "いぬ" },
       { text: "ねこ", kana: "ねこ" },
@@ -234,6 +248,7 @@ export const questionSets: QuestionSet[] = [
     title: "うみのいきもの",
     category: "animals",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "いるか", kana: "いるか" },
       { text: "かめ", kana: "かめ" },
@@ -254,6 +269,7 @@ export const questionSets: QuestionSet[] = [
     title: "そらのいきもの",
     category: "animals",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "ふくろう", kana: "ふくろう" },
       { text: "にわとり", kana: "にわとり" },
@@ -272,6 +288,7 @@ export const questionSets: QuestionSet[] = [
     title: "ごはん",
     category: "foods",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "おにぎり", kana: "おにぎり" },
       { text: "すし", kana: "すし" },
@@ -294,6 +311,7 @@ export const questionSets: QuestionSet[] = [
     title: "くだもの",
     category: "foods",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "りんご", kana: "りんご" },
       { text: "バナナ", kana: "ばなな" },
@@ -312,6 +330,7 @@ export const questionSets: QuestionSet[] = [
     title: "スイーツ",
     category: "foods",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "ケーキ", kana: "けーき" },
       { text: "アイス", kana: "あいす" },
@@ -331,6 +350,7 @@ export const questionSets: QuestionSet[] = [
     title: "りくののりもの",
     category: "vehicles",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "電車", kana: "でんしゃ" },
       { text: "新幹線", kana: "しんかんせん" },
@@ -351,6 +371,7 @@ export const questionSets: QuestionSet[] = [
     title: "そらののりもの",
     category: "vehicles",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "飛行機", kana: "ひこうき" },
       { text: "ヘリコプター", kana: "へりこぷたー" },
@@ -369,6 +390,7 @@ export const questionSets: QuestionSet[] = [
     title: "うみののりもの",
     category: "vehicles",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "船", kana: "ふね" },
       { text: "ヨット", kana: "よっと" },
@@ -387,6 +409,7 @@ export const questionSets: QuestionSet[] = [
     title: "きゅうぎ",
     category: "sports",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "野球", kana: "やきゅう" },
       { text: "サッカー", kana: "さっかー" },
@@ -406,6 +429,7 @@ export const questionSets: QuestionSet[] = [
     title: "かくとうぎ",
     category: "sports",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "じゅうどう", kana: "じゅうどう" },
       { text: "空手", kana: "からて" },
@@ -424,6 +448,7 @@ export const questionSets: QuestionSet[] = [
     title: "きょうか",
     category: "school",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "国語", kana: "こくご" },
       { text: "算数", kana: "さんすう" },
@@ -442,6 +467,7 @@ export const questionSets: QuestionSet[] = [
     title: "がっこうのどうぐ",
     category: "school",
     questionCount: 6,
+    randomOrder: true,
     questions: [
       { text: "消しゴム", kana: "けしごむ" },
       { text: "えんぴつ", kana: "えんぴつ" },

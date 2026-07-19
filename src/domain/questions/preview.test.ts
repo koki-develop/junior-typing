@@ -8,6 +8,7 @@ function makeSet(texts: string[]): QuestionSet {
     title: "test",
     category: "animals",
     questionCount: 1,
+    randomOrder: true,
     questions: texts.map((text) => ({ text, kana: "あ" })),
   };
 }

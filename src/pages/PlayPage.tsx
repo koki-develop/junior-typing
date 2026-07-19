@@ -22,14 +22,14 @@ export function PlayPage() {
     throw new Error(`unreachable: questionSet not found for setId=${setId}`);
   }
 
-  // questionSet.questions は出題プール。実際にプレイするのは questionCount 件のランダム抽出
-  // （順序も含めてシャッフル済み）で、初回マウント時に一度だけ選ぶ。questionSet は
-  // questionSets 内の同一要素への参照なので setId が同じ限り安定している
-  // （router.ts の playRoute に remountDeps: ({ params }) => params を設定しているため、
-  // setId が変わるとこのコンポーネント自体が丸ごとマウントし直され、questionSet がこの
-  // コンポーネントの生存期間中に変わることはない）。
+  // questionSet.questions は出題プール。実際にプレイするのは questionCount 件を抽出したもので、
+  // 抽出と並び順の挙動は questionSet.randomOrder が決める（selectQuestions を参照）。
+  // 初回マウント時に一度だけ選ぶ。questionSet は questionSets 内の同一要素への参照なので
+  // setId が同じ限り安定している（router.ts の playRoute に remountDeps: ({ params }) => params
+  // を設定しているため、setId が変わるとこのコンポーネント自体が丸ごとマウントし直され、
+  // questionSet がこのコンポーネントの生存期間中に変わることはない）。
   const [activeQuestions, setActiveQuestions] = useState<Question[]>(() =>
-    selectQuestions(questionSet.questions, questionSet.questionCount),
+    selectQuestions(questionSet.questions, questionSet.questionCount, questionSet.randomOrder),
   );
   const { view, restart } = useTypingGame(activeQuestions);
 
@@ -42,7 +42,9 @@ export function PlayPage() {
   const previousPhaseRef = useRef(view.phase);
   useEffect(() => {
     if (view.phase === "idle" && previousPhaseRef.current !== "idle") {
-      setActiveQuestions(selectQuestions(questionSet.questions, questionSet.questionCount));
+      setActiveQuestions(
+        selectQuestions(questionSet.questions, questionSet.questionCount, questionSet.randomOrder),
+      );
     }
     previousPhaseRef.current = view.phase;
   }, [view.phase, questionSet]);
