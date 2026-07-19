@@ -13,18 +13,13 @@ function makeSet(texts: string[]): QuestionSet {
 }
 
 describe("previewWords", () => {
-  it("先頭 max 件までを「・」で連結する", () => {
+  it("全件を「・」で連結する", () => {
     const set = makeSet(["いぬ", "ねこ", "うさぎ", "ぞう", "きりん"]);
-    expect(previewWords(set, 3)).toBe("いぬ・ねこ・うさぎ");
+    expect(previewWords(set)).toBe("いぬ・ねこ・うさぎ・ぞう・きりん");
   });
 
-  it("max より少ないときは全件を連結する", () => {
-    const set = makeSet(["いぬ", "ねこ"]);
-    expect(previewWords(set, 8)).toBe("いぬ・ねこ");
-  });
-
-  it("既定の max は 8 件", () => {
+  it("件数が多くても全件を連結する", () => {
     const set = makeSet(Array.from({ length: 12 }, (_, i) => `語${i}`));
-    expect(previewWords(set).split("・")).toHaveLength(8);
+    expect(previewWords(set).split("・")).toHaveLength(12);
   });
 });
