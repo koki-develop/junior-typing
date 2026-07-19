@@ -29,7 +29,9 @@ export function TopPage() {
             <h1 className="m-0 text-3xl font-bold leading-none tracking-tight">
               ジュニアタイピング
             </h1>
-            <p className="mt-2.5 text-sm text-muted">タイピングの きほんを、ゆびで まなぼう。</p>
+            <p className="mt-2.5 text-sm text-muted">
+              タイピングの きほんを、パソコンで まなぼう。
+            </p>
           </div>
         </div>
       </header>

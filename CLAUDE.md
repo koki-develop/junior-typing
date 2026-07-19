@@ -30,7 +30,7 @@ Single-page React 19 + Vite + Tailwind v4 typing game for Japanese input. Depend
 - `src/services/` — adapters to the outside world (`sound.ts` over cuelume)
 - `src/features/` — React glue: hooks and presentational components
 - `src/pages/` — one component per route; each page owns its own `<main>` shell
-- `src/app/` — composition root: router (TanStack Router, type-registered so bad `<Link to>` paths fail `bun run build`), `main.tsx`, `index.css`
+- `src/app/` — composition root: router (TanStack Router, type-registered so bad `<Link to>` paths fail `bun run build`), `main.tsx`, `index.css`, `meta.ts` (site title/description strings, single source of truth for the `head` route option below). Per-route `<title>`/`<meta name="description">` are set via each route's `head` option and rendered by `<HeadContent />` in `rootRoute`; `index.html` carries the same text statically as the pre-hydration/no-JS fallback and can't import from `meta.ts` (it's a separate static asset), so `src/app/meta.test.ts` asserts the two stay in sync.
 
 React Compiler is enabled via `@rolldown/plugin-babel` in `vite.config.ts` — do not add `useMemo`/`useCallback` for optimization purposes.
 

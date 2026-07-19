@@ -1,7 +1,7 @@
 import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/react-router";
 import { expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { routeTree } from "../app/router.ts";
+import { routeTree } from "../app/router.tsx";
 import { CATEGORIES } from "../domain/questions/categories.ts";
 import { previewWords } from "../domain/questions/preview.ts";
 import { questionSets } from "../domain/questions/questions.ts";

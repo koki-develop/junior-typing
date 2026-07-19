@@ -2,17 +2,37 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  HeadContent,
   Outlet,
   redirect,
 } from "@tanstack/react-router";
 import { findQuestionSet } from "../domain/questions/questions.ts";
 import { PlayPage } from "../pages/PlayPage.tsx";
 import { TopPage } from "../pages/TopPage.tsx";
+import { SITE_DESCRIPTION, SITE_TITLE, TOP_TITLE } from "./meta.ts";
 
 // rootRoute は共通シェルを持たない Outlet のみ。将来ページ間で共通のレイアウトが必要になったら
 // ここに RootLayout を挟む。今は各ページが自前で <main> を保持している。
-const rootRoute = createRootRoute({ component: Outlet });
+//
+// head で全ページ共通の title/description をデフォルト定義し、子ルートの head が同じ
+// meta name（title / description）を返すとそちらで上書きされる（TanStack Router の
+// ネスト時 dedupe）。charset・viewport・favicon は index.html 側の静的タグに任せており、
+// ここでは扱わない（HeadContent は index.html 側のタグとは dedupe できないため）。
+// <HeadContent /> は SPA（index.html を自前で持たない構成）向けの描画で、ページ遷移のたびに
+// <head> 内の title/meta を差し替える。
+const rootRoute = createRootRoute({
+  head: () => ({
+    meta: [{ title: TOP_TITLE }, { name: "description", content: SITE_DESCRIPTION }],
+  }),
+  component: () => (
+    <>
+      <HeadContent />
+      <Outlet />
+    </>
+  ),
+});
 
+// title/description は rootRoute の head がそのまま出る（トップページ向けの文言と一致するため上書き不要）。
 const topRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -39,6 +59,17 @@ const playRoute = createRoute({
     }
   },
   remountDeps: ({ params }) => params,
+  // beforeLoad が存在しない setId を redirect 済みなので、head 実行時点で questionSet は必ず解決する。
+  // description は全ページ共通で SITE_DESCRIPTION を使う（title だけセットごとに変える）。
+  head: ({ params }) => {
+    const questionSet = findQuestionSet(params.setId)!;
+    return {
+      meta: [
+        { title: `${questionSet.title} | ${SITE_TITLE}` },
+        { name: "description", content: SITE_DESCRIPTION },
+      ],
+    };
+  },
   component: PlayPage,
 });
 

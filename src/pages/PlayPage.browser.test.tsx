@@ -5,7 +5,7 @@ import { createMemoryHistory, createRouter, RouterProvider } from "@tanstack/rea
 // cuelume を叩かず、effect の実行（play 呼び出し）だけを気にせずに全問プレイできるようにする。
 vi.mock("cuelume", () => ({ play: vi.fn() }));
 
-import { routeTree } from "../app/router.ts";
+import { routeTree } from "../app/router.tsx";
 import { CLEAR_DELAY_MS, COUNTDOWN_STEP_MS } from "../domain/game/machine.ts";
 import { findQuestionSet } from "../domain/questions/questions.ts";
 import { selectQuestions } from "../domain/questions/select.ts";

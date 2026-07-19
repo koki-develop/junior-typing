@@ -12,7 +12,7 @@ import { useTypingGame } from "../features/typing/useTypingGame.ts";
 // この定数の2倍（AnimatePresence の mode="wait" で直列に走るため）。
 const FADE_DURATION_SEC = 0.25;
 
-// /play/$setId のプレイ画面。setId → QuestionSet の解決は router.ts の beforeLoad で済んでおり、
+// /play/$setId のプレイ画面。setId → QuestionSet の解決は router.tsx の beforeLoad で済んでおり、
 // 存在しない setId は / に redirect されているため、ここに来る時点で findQuestionSet は必ず解決する。
 export function PlayPage() {
   const { setId } = useParams({ from: "/play/$setId" });
@@ -25,7 +25,7 @@ export function PlayPage() {
   // questionSet.questions は出題プール。実際にプレイするのは questionCount 件を抽出したもので、
   // 抽出と並び順の挙動は questionSet.randomOrder が決める（selectQuestions を参照）。
   // 初回マウント時に一度だけ選ぶ。questionSet は questionSets 内の同一要素への参照なので
-  // setId が同じ限り安定している（router.ts の playRoute に remountDeps: ({ params }) => params
+  // setId が同じ限り安定している（router.tsx の playRoute に remountDeps: ({ params }) => params
   // を設定しているため、setId が変わるとこのコンポーネント自体が丸ごとマウントし直され、
   // questionSet がこのコンポーネントの生存期間中に変わることはない）。
   const [activeQuestions, setActiveQuestions] = useState<Question[]>(() =>
