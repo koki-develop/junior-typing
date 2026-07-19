@@ -16,14 +16,18 @@ type Props = {
 // 中央スロットだけ idle / countdown / playing で差し替えることで、
 // フェーズ遷移中に周囲のレイアウトが跳ねないようにする。
 export function TypingScreen({ view, title }: Props) {
-  const currentIndex = view.phase === "playing" ? view.questionIndex : 0;
+  // 1 問目のセグメントが「アクティブ」になるのは countdown 終了後に playing へ入ってから。
+  // idle / countdown では null を渡し、進捗バーは全セグメント remaining のまま静止する。
+  const currentIndex = view.phase === "playing" ? view.questionIndex : null;
+  // クリア演出中（cleared=true の CLEAR_DELAY_MS）は現在セグメントを左→右に塗り上げる。
+  const filling = view.phase === "playing" && view.cleared;
   const activeKey =
     view.phase === "playing" ? view.next || null : view.phase === "idle" ? "space" : null;
   return (
     // App.tsx の main と同じ理由で grid-cols を minmax(0,1fr) に固定し、
     // Keyboard（800px 幅）の max-content で列が広がらないようにする。
     <div className="grid grid-cols-[minmax(0,1fr)] place-items-center gap-16">
-      <ProgressBar total={view.total} currentIndex={currentIndex} />
+      <ProgressBar total={view.total} currentIndex={currentIndex} filling={filling} />
       {/* aria-live 領域は「マウント時点で既に入っていた内容」を読み上げない。
           countdown フェーズで初めてマウントされる CountdownMessage の中に置くと、
           最初の "3" が読み上げ対象の変化として検出されず落ちてしまう。
