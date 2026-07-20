@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { CLEAR_DELAY_MS } from "../../../domain/game/machine.ts";
 
 type Props = {
@@ -12,23 +13,62 @@ type Props = {
   filling?: boolean;
 };
 
+// セグメント 1 個ぶんの幅（w-12 = 3rem = 48px、ルート 16px 前提）。
+const SEGMENT_WIDTH = 48;
+// セグメント間の隙間（gap-1.5 = 0.375rem = 6px）。
+const SEGMENT_GAP = 6;
+
 // 出題数と同数のセグメントを横に並べた進捗バー。
 // アクティブセグメントは色の階調（faint → accent/60 → accent）で位置付けを示し、
 // さらに「上に浮く▼マーカー」と「pill のパルス」を重ねて生きている感を出す。
+//
+// セグメントは 1 個 48px 固定（w-12）で組んであるため、total（questionCount）が多い出題
+// セットや画面幅が狭い端末では合計幅（SEGMENT_WIDTH * total + SEGMENT_GAP * (total-1)）が
+// 可搬幅を超えうる。TypingScreen の親 grid は place-items-center のため、素の div は
+// 非ストレッチ配置になり自身の max-content 幅（= セグメント合計幅）でそのまま描画されて
+// 列をはみ出す。Keyboard.tsx が同じ constraints（800px 固定幅のレイアウトが狭い画面を
+// はみ出す）に対して使っている手法をここでも踏襲する: 外側ラッパーを w-full で列幅に
+// 定幅バインドし、実測幅で収まらない分だけ内側の行を transform: scale で一様縮小する。
+// 自然幅は DOM 実測（scrollWidth）ではなく上記定数から計算する ——
+// row は overflow: visible のままなので、はみ出したセグメントがあっても scrollWidth は
+// clientWidth と同値にしかならず、実測では正しい自然幅を拾えない
+// （Keyboard.tsx も同じ理由で KEYBOARD_WIDTH を実測でなく定数で持っている）。
+// ただし Keyboard と異なり overflow-hidden は掛けない ——ActiveMarker（▼）がセグメント
+// 上端からはみ出す装飾を意図的に持つため、クリップするとマーカーが天井で欠けてしまう。
+// scale は useLayoutEffect で初回ペイント前に確定するので、はみ出した状態が一瞬でも
+// 見える心配は無い。
 export function ProgressBar({ total, currentIndex, filling = false }: Props) {
   const value = currentIndex === null ? 0 : Math.min(currentIndex, total);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const natural = total * SEGMENT_WIDTH + Math.max(0, total - 1) * SEGMENT_GAP;
+    if (natural === 0) return;
+    const update = () => setScale(Math.min(1, wrapper.clientWidth / natural));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [total]);
+
   return (
-    <div
-      className="flex justify-center gap-1.5"
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-valuenow={value}
-      aria-label="タイピング進捗"
-    >
-      {Array.from({ length: total }, (_, i) => (
-        <ProgressSegment key={i} state={segmentState(i, currentIndex, filling)} />
-      ))}
+    <div ref={wrapperRef} className="w-full">
+      <div
+        className="flex justify-center gap-1.5"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-valuenow={value}
+        aria-label="タイピング進捗"
+        style={{ transform: `scale(${scale})` }}
+      >
+        {Array.from({ length: total }, (_, i) => (
+          <ProgressSegment key={i} state={segmentState(i, currentIndex, filling)} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -43,9 +83,13 @@ function segmentState(i: number, currentIndex: number | null, filling: boolean):
 }
 
 // remaining / done は装飾なしの単色 pill。1 つの span で表現する。
+// shrink-0: 親の transform: scale による縮小と flex-shrink による潰れが二重に効かないよう、
+// 常に w-12 の自然幅を保たせる（実際の縮小表示は親の scale だけが担う）。
 function StaticSegment({ tone }: { tone: "faint" | "accent" }) {
   const className =
-    tone === "faint" ? "h-1.5 w-12 rounded-full bg-faint" : "h-1.5 w-12 rounded-full bg-accent";
+    tone === "faint"
+      ? "h-1.5 w-12 shrink-0 rounded-full bg-faint"
+      : "h-1.5 w-12 shrink-0 rounded-full bg-accent";
   return <span className={className} />;
 }
 
@@ -60,7 +104,8 @@ function ActiveSegment({ filling }: { filling: boolean }) {
   return (
     // ラッパは pill と同じ h/w を持ち、内側は absolute inset-0 で pill を配置する。
     // pill 側に overflow-hidden を掛けても、マーカーはこのラッパ直下にあるので上へ抜けられる。
-    <span className="relative h-1.5 w-12" aria-current="step">
+    // shrink-0 の理由は StaticSegment 側のコメントを参照。
+    <span className="relative h-1.5 w-12 shrink-0" aria-current="step">
       <span
         className={
           filling
