@@ -54,7 +54,14 @@ export function TopPage() {
                 {category.label}
               </h2>
             </div>
-            <ul className="grid grid-cols-3 gap-5">
+            {/* 3 列が上限（デザイン上の固定値）。auto-fill/auto-fit で「入るだけ列を作る」
+                方式にすると、コンテナが広い画面で 4 列以上に増えてしまい上限の意図が
+                壊れるため使わない。代わりに sm:/lg: のブレークポイントで 1 → 2 → 3 と
+                段階的に増やし、lg 以降は grid-cols-3 に固定して頭打ちにする。
+                各カテゴリの所属セット数が列数に満たない場合（school/sports の 2 セット等）
+                も、Tailwind の grid-cols-N は列トラック数を固定 fr で確保するだけで
+                アイテムを自動で拡張しないため、余った列は空のまま残りカードは間延びしない。 */}
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {sets.map((set) => (
                 <li key={set.id}>
                   <QuestionSetCard set={set} highScore={highScores[set.id] ?? null} />
@@ -94,7 +101,7 @@ export function TopPage() {
 // バラつくためパレットの一貫性を壊す。
 //
 // 値位置の "-" は未記録用のプレースホルダ。文（「まだ ないよ」等）ではなくダッシュに
-// しているのは、カードを 3 列で並べたとき「数字（tabular-nums で幅固定）」と可変長の文が
+// しているのは、カードを横に並べたとき「数字（tabular-nums で幅固定）」と可変長の文が
 // 混在するとカード内右端の位置がバラつき、視線の流れが乱れるため。未記録時のダッシュは
 // text-faded に落として「値が入っていない状態」を色でも表現する。ラベル「ハイスコア」も
 // 同じ text-faded に揃えて、スコア行全体を「無」のトーンで統一する。
