@@ -11,6 +11,7 @@ export type Category = {
 
 export const CATEGORIES: Category[] = [
   { id: "hiragana", label: "ひらがな", color: "#ec4899" },
+  { id: "kanji", label: "かん字", color: "#14b8a6" },
   { id: "animals", label: "いきもの", color: "#d97706" },
   { id: "foods", label: "たべもの", color: "#ef4444" },
   { id: "vehicles", label: "のりもの", color: "#3b82f6" },
