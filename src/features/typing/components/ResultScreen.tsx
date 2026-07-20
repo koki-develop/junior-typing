@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { animate, useMotionValue, useTransform } from "motion/react";
 import * as m from "motion/react-m";
 import { useEffect } from "react";
@@ -46,7 +47,12 @@ type Props = {
 
 // 全問クリア後に表示する結果画面。
 // スコアを大きく強調しつつ、小学生向けに漢字を控えたラベルで打鍵数・ミス数・時間を並べる。
-// 「もういちど」ボタンでリスタート。
+// 「もういちど」ボタンでリスタート。その下の「もどる」リンクは控えめな text-muted の
+// 二次アクションとして扱い、主役の「もういちど」ボタンと視覚的な優劣をつける。文言は
+// PlayPage ヘッダーの「もどる」リンク（同じく "/" へ遷移）と揃え、行き先が同じ操作に
+// 違う呼び名をつけて混乱させないようにする。両者は同じアクセシブルネームを持つが、
+// 片方はヘッダー（role="banner"）、もう片方は結果画面本文という異なる landmark に
+// あるため区別可能（PlayPage.browser.test.tsx はヘッダー側を banner スコープで特定する）。
 //
 // ハイスコア関連の分岐:
 //   - 新記録時（isNewHigh=true）: スコアの上に「ハイスコア！」バッジ。
@@ -122,6 +128,13 @@ export function ResultScreen({ result, highScoreInfo, onRestart }: Props) {
         >
           もういちど
         </button>
+        <Link
+          to="/"
+          data-cuelume-press="press"
+          className="rounded-full px-3 py-2 text-lg text-muted transition hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
+          もどる
+        </Link>
       </div>
     </div>
   );
